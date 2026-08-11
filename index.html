@@ -1,419 +1,64 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>폴리스의 건축가들 점수 계산기</title>
-    <style>
-        :root {
-            --primary-color: #2c3e50;
-            --bg-color: #f8f9fa;
-            --card-bg: #ffffff;
-            --border-color: #e2e8f0;
-            --text-color: #334155;
-        }
+// [이전 코드 생략: 변수 정의 부분은 그대로 유지]
 
-        body {
-            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            margin: 0;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 24px;
-            flex-wrap: wrap;
-            gap: 12px;
-        }
-
-        h1 {
-            font-size: 1.5rem;
-            margin: 0;
-            color: var(--primary-color);
-        }
-
-        .actions {
-            display: flex;
-            gap: 10px;
-        }
-
-        button {
-            cursor: pointer;
-            padding: 8px 16px;
-            font-size: 0.95rem;
-            font-weight: 600;
-            border-radius: 8px;
-            border: none;
-            transition: background-color 0.2s;
-        }
-
-        .btn-primary {
-            background-color: #3b82f6;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background-color: #2563eb;
-        }
-
-        .btn-danger {
-            background-color: #ef4444;
-            color: white;
-        }
-
-        .btn-danger:hover {
-            background-color: #dc2626;
-        }
-
-        /* 실시간 순위판 스타일 */
-        .scoreboard-summary {
-            background: white;
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 16px 20px;
-            margin-bottom: 24px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }
-
-        .scoreboard-summary h2 {
-            font-size: 1.1rem;
-            margin-top: 0;
-            margin-bottom: 12px;
-            color: #64748b;
-        }
-
-        .ranking-list {
-            display: flex;
-            gap: 12px;
-            overflow-x: auto;
-            padding-bottom: 4px;
-        }
-
-        .ranking-item {
-            background: #f1f5f9;
-            padding: 10px 16px;
-            border-radius: 8px;
-            min-width: 140px;
-            flex-shrink: 0;
-            display: flex;
-            flex-direction: column;
-            border-left: 4px solid #cbd5e1;
-        }
-
-        .ranking-item.rank-1 { border-left-color: #eab308; background: #fefce8; }
-        .ranking-item.rank-2 { border-left-color: #94a3b8; }
-        .ranking-item.rank-3 { border-left-color: #b45309; }
-
-        .ranking-name {
-            font-weight: bold;
-            font-size: 0.9rem;
-            color: #475569;
-        }
-
-        .ranking-score {
-            font-size: 1.2rem;
-            font-weight: 800;
-            color: #1e293b;
-            margin-top: 2px;
-        }
-
-        /* 플레이어 기록지 그리드 */
-        .players-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
-            gap: 20px;
-        }
-
-        .player-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 16px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .player-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid var(--border-color);
-            padding-bottom: 8px;
-        }
-
-        .player-name-input {
-            font-size: 1.1rem;
-            font-weight: bold;
-            border: 1px solid transparent;
-            background: transparent;
-            padding: 4px;
-            border-radius: 4px;
-            width: 130px;
-            color: var(--primary-color);
-        }
-
-        .player-name-input:focus {
-            border-color: #3b82f6;
-            background: white;
-            outline: none;
-        }
-
-        .delete-player {
-            background: none;
-            border: none;
-            color: #94a3b8;
-            font-size: 1.2rem;
-            cursor: pointer;
-            padding: 0 4px;
-        }
-
-        .delete-player:hover {
-            color: #ef4444;
-        }
-
-        /* 구역별 입력 행 스타일 */
-        .category-row {
-            display: flex;
-            flex-direction: column;
-            background: #f8fafc;
-            padding: 8px 10px;
-            border-radius: 8px;
-            gap: 4px;
-            border: 1px solid #f1f5f9;
-        }
-
-        .category-title {
-            font-size: 0.85rem;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .category-inputs {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            font-size: 0.85rem;
-            color: #64748b;
-        }
-
-        .category-inputs input {
-            width: 42px;
-            padding: 4px;
-            text-align: center;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            font-size: 0.9rem;
-        }
-
-        .category-inputs input:focus {
-            border-color: #3b82f6;
-            outline: none;
-        }
-
-        .category-result {
-            margin-left: auto;
-            font-weight: bold;
-            color: #1e293b;
-        }
-
-        /* 석재 입력 및 최종 점수 */
-        .stone-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 4px 10px;
-            font-size: 0.9rem;
-            font-weight: 600;
-        }
-
-        .stone-row input {
-            width: 50px;
-            padding: 4px;
-            text-align: center;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-        }
-
-        .total-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #eff6ff;
-            padding: 10px 12px;
-            border-radius: 8px;
-            font-weight: 800;
-            color: #1d4ed8;
-            font-size: 1.1rem;
-        }
-    </style>
-</head>
-<body>
-
-<div class="container">
-    <header>
-        <h1>🏛️ 폴리스의 건축가들 실시간 점수 계산기</h1>
-        <div class="actions">
-            <button class="btn-primary" id="add-player-btn">+ 플레이어 추가</button>
-            <button class="btn-danger" id="reset-btn">초기화</button>
-        </div>
-    </header>
-
-    <!-- 실시간 순위판 -->
-    <div class="scoreboard-summary">
-        <h2>🏆 실시간 순위 경쟁</h2>
-        <div class="ranking-list" id="ranking-list">
-            <!-- 동적으로 생성됨 -->
-        </div>
-    </div>
-
-    <!-- 플레이어별 기록지 카드 영역 -->
-    <div class="players-container" id="players-container">
-        <!-- 동적으로 생성됨 -->
-    </div>
-</div>
-
-<script>
-    // 구역 데이터 정의
-    const categories = [
-        { id: 'blue', name: '🟦 주거지 (가장 큰 그룹)', color: '#3b82f6' },
-        { id: 'yellow', name: '🟨 상업지 (따로 떨어진)', color: '#eab308' },
-        { id: 'red', name: '🟥 병영 (가장자리 국경)', color: '#ef4444' },
-        { id: 'purple', name: '🟪 신전 (완전히 둘러싸인)', color: '#8b5cf6' },
-        { id: 'green', name: '🟩 정원 (모든 정원)', color: '#10b981' }
-    ];
-
-    let players = [
-        { id: 1, name: '건축가 1', values: { blue: {val:0, star:0}, yellow: {val:0, star:0}, red: {val:0, star:0}, purple: {val:0, star:0}, green: {val:0, star:0} }, stone: 0 },
-        { id: 2, name: '건축가 2', values: { blue: {val:0, star:0}, yellow: {val:0, star:0}, red: {val:0, star:0}, purple: {val:0, star:0}, green: {val:0, star:0} }, stone: 0 }
-    ];
-
-    const playersContainer = document.getElementById('players-container');
-    const rankingList = document.getElementById('ranking-list');
-
-    // 1. 계산 로직
-    function calculateTotal(player) {
-        let score = 0;
-        categories.forEach(cat => {
-            score += (player.values[cat.id].star * player.values[cat.id].val);
-        });
-        score += Number(player.stone);
-        return score;
-    }
-
-    // 2. 랭킹 렌더링
-    function renderRanking() {
-        const rankedPlayers = [...players].map(p => ({ ...p, total: calculateTotal(p) }))
-            .sort((a, b) => b.total - a.total || b.stone - a.stone);
-
-        rankingList.innerHTML = rankedPlayers.map((p, idx) => `
-            <div class="ranking-item rank-${idx + 1}">
-                <div class="ranking-name">${idx + 1}위 · ${p.name}</div>
-                <div class="ranking-score">${p.total}점</div>
-            </div>
-        `).join('');
-    }
-
-    // 3. 플레이어 카드 렌더링 (⭐ 별 아이콘과 ⬡ 타일 아이콘 명시)
-    function renderPlayers() {
-        playersContainer.innerHTML = players.map(player => {
-            let catHtml = categories.map(cat => {
-                const data = player.values[cat.id];
-                return `
-                    <div class="category-row">
-                        <div class="category-title" style="color: ${cat.color}">${cat.name}</div>
-                        <div class="category-inputs">
-                            ⭐별 <input type="number" min="0" value="${data.star}" oninput="updateValue(${player.id}, '${cat.id}', 'star', this.value)">
-                            × ⬡타일 <input type="number" min="0" value="${data.val}" oninput="updateValue(${player.id}, '${cat.id}', 'val', this.value)">
-                            <span class="category-result">= ${data.star * data.val}점</span>
-                        </div>
-                    </div>`;
-            }).join('');
-
+// 3. 플레이어 카드 렌더링 (입력 시 전체 리렌더링 방지)
+function renderPlayers() {
+    playersContainer.innerHTML = players.map(player => {
+        let catHtml = categories.map(cat => {
+            const data = player.values[cat.id];
+            // ID를 고유하게 생성하여 DOM 업데이트가 아닌 값만 변경되도록 유도
             return `
-                <div class="player-card">
-                    <div class="player-header">
-                        <input type="text" class="player-name-input" value="${player.name}" onchange="updateName(${player.id}, this.value)">
-                        ${players.length > 1 ? `<button class="delete-player" onclick="deletePlayer(${player.id})">&times;</button>` : ''}
-                    </div>
-                    ${catHtml}
-                    <div class="stone-row">
-                        <span>석재 보너스 (개당 1점)</span>
-                        <input type="number" min="0" value="${player.stone}" oninput="updateStone(${player.id}, this.value)">
-                    </div>
-                    <div class="total-row">
-                        <span>총점</span>
-                        <span>${calculateTotal(player)}점</span>
+                <div class="category-row">
+                    <div class="category-title" style="color: ${cat.color}">${cat.name}</div>
+                    <div class="category-inputs">
+                        ⭐별 <input type="number" min="0" value="${data.star}" 
+                            oninput="updateValue(${player.id}, '${cat.id}', 'star', this.value, this)">
+                        × ⬡타일 <input type="number" min="0" value="${data.val}" 
+                            oninput="updateValue(${player.id}, '${cat.id}', 'val', this.value, this)">
+                        <span class="category-result" id="res-${player.id}-${cat.id}">= ${data.star * data.val}점</span>
                     </div>
                 </div>`;
         }).join('');
-    }
 
-    // 4. 전역 함수 할당
-    window.updateName = (id, name) => {
-        players.find(p => p.id === id).name = name;
-        renderRanking();
-    };
+        return `
+            <div class="player-card">
+                <div class="player-header">
+                    <input type="text" class="player-name-input" value="${player.name}" onchange="updateName(${player.id}, this.value)">
+                    ${players.length > 1 ? `<button class="delete-player" onclick="deletePlayer(${player.id})">&times;</button>` : ''}
+                </div>
+                ${catHtml}
+                <div class="stone-row">
+                    <span>석재 보너스</span>
+                    <input type="number" min="0" value="${player.stone}" oninput="updateStone(${player.id}, this.value)">
+                </div>
+                <div class="total-row" id="total-${player.id}">
+                    <span>총점</span>
+                    <span>${calculateTotal(player)}점</span>
+                </div>
+            </div>`;
+    }).join('');
+}
 
-    window.updateValue = (id, catId, field, val) => {
-        const player = players.find(p => p.id === id);
-        player.values[catId][field] = Number(val) || 0;
-        renderPlayers();
-        renderRanking();
-    };
-
-    window.updateStone = (id, val) => {
-        players.find(p => p.id === id).stone = Number(val) || 0;
-        renderPlayers();
-        renderRanking();
-    };
-
-    window.deletePlayer = (id) => {
-        players = players.filter(p => p.id !== id);
-        renderPlayers();
-        renderRanking();
-    };
-
-    // 5. 버튼 이벤트
-    document.getElementById('add-player-btn').addEventListener('click', () => {
-        const newId = Date.now();
-        players.push({
-            id: newId,
-            name: `건축가 ${players.length + 1}`,
-            values: { blue: {val:0, star:0}, yellow: {val:0, star:0}, red: {val:0, star:0}, purple: {val:0, star:0}, green: {val:0, star:0} },
-            stone: 0
-        });
-        renderPlayers();
-        renderRanking();
-    });
-
-    document.getElementById('reset-btn').addEventListener('click', () => {
-        if (confirm('모든 점수 기록을 초기화하시겠습니까?')) {
-            players.forEach(p => {
-                p.stone = 0;
-                Object.keys(p.values).forEach(k => { p.values[k].val=0; p.values[k].star=0; });
-            });
-            renderPlayers();
-            renderRanking();
-        }
-    });
-
-    // 초기 실행
-    renderPlayers();
+// 4. 개별 값만 업데이트 (전체 리렌더링 제거)
+window.updateValue = (id, catId, field, val, inputEl) => {
+    const player = players.find(p => p.id === id);
+    player.values[catId][field] = Number(val) || 0;
+    
+    // 1. 해당 구역의 점수만 즉시 계산 및 업데이트
+    const catResult = player.values[catId].star * player.values[catId].val;
+    document.getElementById(`res-${id}-${catId}`).innerText = `= ${catResult}점`;
+    
+    // 2. 전체 총점 업데이트
+    document.getElementById(`total-${id}`).querySelector('span:last-child').innerText = `${calculateTotal(player)}점`;
+    
+    // 3. 랭킹만 갱신 (전체 카드는 다시 그리지 않음)
     renderRanking();
-</script>
+};
 
-</body>
-</html>
+window.updateStone = (id, val) => {
+    const player = players.find(p => p.id === id);
+    player.stone = Number(val) || 0;
+    document.getElementById(`total-${id}`).querySelector('span:last-child').innerText = `${calculateTotal(player)}점`;
+    renderRanking();
+};
+
+// [삭제/추가 함수 등은 기존 그대로 유지]
