@@ -3,174 +3,417 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>폴리스의 건축가들 점수 기록지</title>
+    <title>폴리스의 건축가들 점수 계산기</title>
     <style>
-        body { font-family: 'Malgun Gothic', sans-serif; background: #eef2f5; padding: 15px; color: #333; }
-        .container { max-width: 900px; margin: 0 auto; background: #fdfbf7; padding: 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border: 2px solid #dcd6cd; }
-        
-        .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #e0dad0; padding-bottom: 10px; }
-        h2 { margin: 0; color: #2c3e50; font-size: 20px; }
-        
-        button { background: #34495e; color: white; border: none; padding: 8px 14px; border-radius: 4px; font-weight: bold; cursor: pointer; }
-        button:hover { background: #2c3e50; }
-        button.danger { background: #c0392b; padding: 2px 6px; font-size: 11px; margin-top: 4px; }
+        :root {
+            --primary-color: #2c3e50;
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --border-color: #e2e8f0;
+            --text-color: #334155;
+        }
 
-        .table-container { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; background: white; min-width: 600px; }
-        th, td { border: 1px solid #dcd6cd; padding: 8px; text-align: center; font-size: 13px; }
-        th { background-color: #f4f1ea; color: #444; }
-        
-        .zone-col { text-align: left; font-weight: bold; padding-left: 12px; width: 130px; background: #faf8f5; }
-        .calc-box { display: flex; align-items: center; justify-content: center; gap: 4px; font-size: 12px; color: #666; }
-        input[type="number"] { width: 36px; text-align: center; padding: 3px; border: 1px solid #ccc; border-radius: 3px; }
-        
-        .score-result { font-size: 11px; color: #2980b9; margin-top: 3px; font-weight: bold; }
-        .total-row { background-color: #f4f1ea !important; font-weight: bold; font-size: 14px; }
-        .winner-mark { background-color: #eafaf1 !important; color: #27ae60; }
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            margin: 0;
+            color: var(--primary-color);
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            cursor: pointer;
+            padding: 8px 16px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border-radius: 8px;
+            border: none;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary {
+            background-color: #3b82f6;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #2563eb;
+        }
+
+        .btn-danger {
+            background-color: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #dc2626;
+        }
+
+        /* 실시간 순위판 스타일 */
+        .scoreboard-summary {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .scoreboard-summary h2 {
+            font-size: 1.1rem;
+            margin-top: 0;
+            margin-bottom: 12px;
+            color: #64748b;
+        }
+
+        .ranking-list {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+
+        .ranking-item {
+            background: #f1f5f9;
+            padding: 10px 16px;
+            border-radius: 8px;
+            min-width: 140px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            border-left: 4px solid #cbd5e1;
+        }
+
+        .ranking-item.rank-1 { border-left-color: #eab308; background: #fefce8; }
+        .ranking-item.rank-2 { border-left-color: #94a3b8; }
+        .ranking-item.rank-3 { border-left-color: #b45309; }
+
+        .ranking-name {
+            font-weight: bold;
+            font-size: 0.9rem;
+            color: #475569;
+        }
+
+        .ranking-score {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: #1e293b;
+            margin-top: 2px;
+        }
+
+        /* 플레이어 기록지 그리드 */
+        .players-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+            gap: 20px;
+        }
+
+        .player-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .player-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 8px;
+        }
+
+        .player-name-input {
+            font-size: 1.1rem;
+            font-weight: bold;
+            border: 1px solid transparent;
+            background: transparent;
+            padding: 4px;
+            border-radius: 4px;
+            width: 130px;
+            color: var(--primary-color);
+        }
+
+        .player-name-input:focus {
+            border-color: #3b82f6;
+            background: white;
+            outline: none;
+        }
+
+        .delete-player {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0 4px;
+        }
+
+        .delete-player:hover {
+            color: #ef4444;
+        }
+
+        /* 구역별 입력 행 스타일 */
+        .category-row {
+            display: flex;
+            flex-direction: column;
+            background: #f8fafc;
+            padding: 8px 10px;
+            border-radius: 8px;
+            gap: 4px;
+            border: 1px solid #f1f5f9;
+        }
+
+        .category-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .category-inputs {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.85rem;
+            color: #64748b;
+        }
+
+        .category-inputs input {
+            width: 42px;
+            padding: 4px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .category-inputs input:focus {
+            border-color: #3b82f6;
+            outline: none;
+        }
+
+        .category-result {
+            margin-left: auto;
+            font-weight: bold;
+            color: #1e293b;
+        }
+
+        /* 석재 입력 및 최종 점수 */
+        .stone-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 10px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .stone-row input {
+            width: 50px;
+            padding: 4px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #eff6ff;
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-weight: 800;
+            color: #1d4ed8;
+            font-size: 1.1rem;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header-bar">
-            <h2>📜 폴리스의 건축가들 점수 기록지</h2>
-            <button onclick="addPlayer()">+ 플레이어 추가</button>
-        </div>
 
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr id="headerRow">
-                        <th class="zone-col">구역 / 인원</th>
-                    </tr>
-                </thead>
-                <tbody id="bodyRows">
-                    <!-- 자바스크립트로 동적 생성됩니다 -->
-                </tbody>
-            </table>
+<div class="container">
+    <header>
+        <h1>🏛️ 폴리스의 건축가들 실시간 점수 계산기</h1>
+        <div class="actions">
+            <button class="btn-primary" id="add-player-btn">+ 플레이어 추가</button>
+            <button class="btn-danger" id="reset-btn">초기화</button>
+        </div>
+    </header>
+
+    <!-- 실시간 순위판 -->
+    <div class="scoreboard-summary">
+        <h2>🏆 실시간 순위 경쟁</h2>
+        <div class="ranking-list" id="ranking-list">
+            <!-- 동적으로 생성됨 -->
         </div>
     </div>
 
-    <script>
-        let players = [];
-        const categories = [
-            { name: "🟦 주거지", key: "b" },
-            { name: "🟨 시장", key: "y" },
-            { name: "🟥 병영", key: "r" },
-            { name: "🟪 신전", key: "p" },
-            { name: "🟩 정원", key: "g" }
-        ];
+    <!-- 플레이어별 기록지 카드 영역 -->
+    <div class="players-container" id="players-container">
+        <!-- 동적으로 생성됨 -->
+    </div>
+</div>
 
-        window.onload = function() {
-            addPlayer();
-            addPlayer();
-        };
+<script>
+    // 구역 데이터 정의
+    const categories = [
+        { id: 'blue', name: '🟦 주거지 (가장 큰 그룹)', color: '#3b82f6' },
+        { id: 'yellow', name: '🟨 상업지 (따로 떨어진)', color: '#eab308' },
+        { id: 'red', name: '🟥 병영 (가장자리 국경)', color: '#ef4444' },
+        { id: 'purple', name: '🟪 신전 (완전히 둘러싸인)', color: '#8b5cf6' },
+        { id: 'green', name: '🟩 정원 (모든 정원)', color: '#10b981' }
+    ];
 
-        function addPlayer() {
-            if (players.length >= 4) {
-                alert("최대 4명까지만 추가할 수 있습니다.");
-                return;
-            }
-            const pId = players.length + 1;
-            players.push({
-                id: pId,
-                name: `플레이어 ${pId}`,
-                values: { b: [0,0], y: [0,0], r: [0,0], p: [0,0], g: [0,0] },
-                stones: 0
-            });
-            renderTable();
-        }
+    let players = [
+        { id: 1, name: '건축가 1', values: { blue: {val:0, star:0}, yellow: {val:0, star:0}, red: {val:0, star:0}, purple: {val:0, star:0}, green: {val:0, star:0} }, stone: 0 },
+        { id: 2, name: '건축가 2', values: { blue: {val:0, star:0}, yellow: {val:0, star:0}, red: {val:0, star:0}, purple: {val:0, star:0}, green: {val:0, star:0} }, stone: 0 }
+    ];
 
-        function removePlayer(pId) {
-            if (players.length <= 1) {
-                alert("최소 1명은 있어야 합니다.");
-                return;
-            }
-            players = players.filter(p => p.id !== pId);
-            players.forEach((p, idx) => p.id = idx + 1);
-            renderTable();
-        }
+    const playersContainer = document.getElementById('players-container');
+    const rankingList = document.getElementById('ranking-list');
 
-        function updateVal(pId, catKey, subIdx, val) {
-            const player = players.find(p => p.id === pId);
-            if (player) {
-                player.values[catKey][subIdx] = Number(val);
-                renderTable();
-            }
-        }
+    // 1. 계산 로직
+    function calculateTotal(player) {
+        let score = 0;
+        categories.forEach(cat => {
+            score += (player.values[cat.id].star * player.values[cat.id].val);
+        });
+        score += Number(player.stone);
+        return score;
+    }
 
-        function updateStone(pId, val) {
-            const player = players.find(p => p.id === pId);
-            if (player) {
-                player.stones = Number(val);
-                renderTable();
-            }
-        }
+    // 2. 랭킹 렌더링
+    function renderRanking() {
+        const rankedPlayers = [...players].map(p => ({ ...p, total: calculateTotal(p) }))
+            .sort((a, b) => b.total - a.total || b.stone - a.stone);
 
-        function renderTable() {
-            let headerHtml = `<th class="zone-col">구역 / 인원</th>`;
-            players.forEach(p => {
-                headerHtml++; // placeholder to keep logic clean
-                headerHtml = `<th class="zone-col">구역 / 인원</th>`; // reset
-            });
-            
-            // Re-eval header properly
-            headerHtml = `<th class="zone-col">구역</th>`;
-            players.forEach(p => {
-                headerHtml += `<th>
-                    ${p.name}
-                    <br><button class="danger" onclick="removePlayer(${p.id})">삭제</button>
-                </th>`;
-            });
-            document.getElementById('headerRow').innerHTML = headerHtml;
+        rankingList.innerHTML = rankedPlayers.map((p, idx) => `
+            <div class="ranking-item rank-${idx + 1}">
+                <div class="ranking-name">${idx + 1}위 · ${p.name}</div>
+                <div class="ranking-score">${p.total}점</div>
+            </div>
+        `).join('');
+    }
 
-            let bodyHtml = '';
-            categories.forEach(cat => {
-                bodyHtml += `<tr><td class="zone-col">${cat.name}</td>`;
-                players.forEach(p => {
-                    let val = p.values[cat.key][0];
-                    let star = p.values[cat.key][1];
-                    let score = val * star;
-                    bodyHtml += `<td>
-                        <div class="calc-box">
-                            <input type="number" value="${val}" min="0" oninput="updateVal(${p.id}, '${cat.key}', 0, this.value)"> × 
-                            <input type="number" value="${star}" min="0" oninput="updateVal(${p.id}, '${cat.key}', 1, this.value)">
+    // 3. 플레이어 카드 렌더링 (⭐ 별 아이콘과 ⬡ 타일 아이콘 명시)
+    function renderPlayers() {
+        playersContainer.innerHTML = players.map(player => {
+            let catHtml = categories.map(cat => {
+                const data = player.values[cat.id];
+                return `
+                    <div class="category-row">
+                        <div class="category-title" style="color: ${cat.color}">${cat.name}</div>
+                        <div class="category-inputs">
+                            ⭐별 <input type="number" min="0" value="${data.star}" oninput="updateValue(${player.id}, '${cat.id}', 'star', this.value)">
+                            × ⬡타일 <input type="number" min="0" value="${data.val}" oninput="updateValue(${player.id}, '${cat.id}', 'val', this.value)">
+                            <span class="category-result">= ${data.star * data.val}점</span>
                         </div>
-                        <div class="score-result">= ${score}점</div>
-                    </td>`;
-                });
-                bodyHtml += `</tr>`;
-            });
+                    </div>`;
+            }).join('');
 
-            // 석재 행
-            bodyHtml += `<tr><td class="zone-col">🧱 남은 석재</td>`;
+            return `
+                <div class="player-card">
+                    <div class="player-header">
+                        <input type="text" class="player-name-input" value="${player.name}" onchange="updateName(${player.id}, this.value)">
+                        ${players.length > 1 ? `<button class="delete-player" onclick="deletePlayer(${player.id})">&times;</button>` : ''}
+                    </div>
+                    ${catHtml}
+                    <div class="stone-row">
+                        <span>석재 보너스 (개당 1점)</span>
+                        <input type="number" min="0" value="${player.stone}" oninput="updateStone(${player.id}, this.value)">
+                    </div>
+                    <div class="total-row">
+                        <span>총점</span>
+                        <span>${calculateTotal(player)}점</span>
+                    </div>
+                </div>`;
+        }).join('');
+    }
+
+    // 4. 전역 함수 할당
+    window.updateName = (id, name) => {
+        players.find(p => p.id === id).name = name;
+        renderRanking();
+    };
+
+    window.updateValue = (id, catId, field, val) => {
+        const player = players.find(p => p.id === id);
+        player.values[catId][field] = Number(val) || 0;
+        renderPlayers();
+        renderRanking();
+    };
+
+    window.updateStone = (id, val) => {
+        players.find(p => p.id === id).stone = Number(val) || 0;
+        renderPlayers();
+        renderRanking();
+    };
+
+    window.deletePlayer = (id) => {
+        players = players.filter(p => p.id !== id);
+        renderPlayers();
+        renderRanking();
+    };
+
+    // 5. 버튼 이벤트
+    document.getElementById('add-player-btn').addEventListener('click', () => {
+        const newId = Date.now();
+        players.push({
+            id: newId,
+            name: `건축가 ${players.length + 1}`,
+            values: { blue: {val:0, star:0}, yellow: {val:0, star:0}, red: {val:0, star:0}, purple: {val:0, star:0}, green: {val:0, star:0} },
+            stone: 0
+        });
+        renderPlayers();
+        renderRanking();
+    });
+
+    document.getElementById('reset-btn').addEventListener('click', () => {
+        if (confirm('모든 점수 기록을 초기화하시겠습니까?')) {
             players.forEach(p => {
-                bodyHtml += `<td>
-                    <input type="number" style="width:45px;" value="${p.stones}" min="0" oninput="updateStone(${p.id}, this.value)"> 개 (+1점)
-                </td>`;
+                p.stone = 0;
+                Object.keys(p.values).forEach(k => { p.values[k].val=0; p.values[k].star=0; });
             });
-            bodyHtml += `</tr>`;
-
-            // 총점 및 1위 계산
-            let totals = players.map(p => {
-                let catSum = 0;
-                categories.forEach(cat => {
-                    catSum += p.values[cat.key][0] * p.values[cat.key][1];
-                });
-                return catSum + p.stones;
-            });
-            let maxScore = Math.max(...totals);
-
-            bodyHtml += `<tr class="total-row"><td class="zone-col">🏆 최종 총점</td>`;
-            players.forEach((p, idx) => {
-                let isWinner = (totals[idx] === maxScore && maxScore > 0);
-                bodyHtml += `<td class="${isWinner ? 'winner-mark' : ''}">
-                    ${totals[idx]}점 ${isWinner ? '👑' : ''}
-                </td>`;
-            });
-            bodyHtml += `</tr>`;
-
-            document.getElementById('bodyRows').innerHTML = bodyHtml;
+            renderPlayers();
+            renderRanking();
         }
-    </script>
+    });
+
+    // 초기 실행
+    renderPlayers();
+    renderRanking();
+</script>
+
 </body>
 </html>
