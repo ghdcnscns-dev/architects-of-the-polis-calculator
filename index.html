@@ -1,70 +1,140 @@
-// [기존 변수 및 1, 2번 함수는 그대로 사용]
+<!-- <script> 섹션만 수정하여 적용하시면 됩니다 -->
+<script>
+    // 구역 데이터 정의
+    const categories = [
+        { id: 'blue', name: '🟦 주거지 (가장 큰 그룹)', color: '#3b82f6' },
+        { id: 'yellow', name: '🟨 상업지 (따로 떨어진)', color: '#eab308' },
+        { id: 'red', name: '🟥 병영 (가장자리 국경)', color: '#ef4444' },
+        { id: 'purple', name: '🟪 신전 (완전히 둘러싸인)', color: '#8b5cf6' },
+        { id: 'green', name: '🟩 정원 (모든 정원)', color: '#10b981' }
+    ];
 
-// 3. 플레이어 카드 렌더링 (구조 유지)
-function renderPlayers() {
-    playersContainer.innerHTML = players.map(player => {
-        let catHtml = categories.map(cat => {
-            const data = player.values[cat.id];
-            // ID를 부여하여 나중에 해당 위치만 찾아서 수정할 수 있게 함
+    let players = [
+        { id: 1, name: '건축가 1', values: { blue: {val:0, star:0}, yellow: {val:0, star:0}, red: {val:0, star:0}, purple: {val:0, star:0}, green: {val:0, star:0} }, stone: 0, stoneMission: false },
+        { id: 2, name: '건축가 2', values: { blue: {val:0, star:0}, yellow: {val:0, star:0}, red: {val:0, star:0}, purple: {val:0, star:0}, green: {val:0, star:0} }, stone: 0, stoneMission: false }
+    ];
+
+    const playersContainer = document.getElementById('players-container');
+    const rankingList = document.getElementById('ranking-list');
+
+    // 1. 계산 로직 (미션 완료 시 5점, 미완료 시 1점)
+    function calculateTotal(player) {
+        let score = 0;
+        categories.forEach(cat => {
+            score += (player.values[cat.id].star * player.values[cat.id].val);
+        });
+        const multiplier = player.stoneMission ? 5 : 1;
+        score += (Number(player.stone) * multiplier);
+        return score;
+    }
+
+    // 2. 랭킹 렌더링
+    function renderRanking() {
+        const rankedPlayers = [...players].map(p => ({ ...p, total: calculateTotal(p) }))
+            .sort((a, b) => b.total - a.total || b.stone - a.stone);
+
+        rankingList.innerHTML = rankedPlayers.map((p, idx) => `
+            <div class="ranking-item rank-${idx + 1}">
+                <div class="ranking-name">${idx + 1}위 · ${p.name}</div>
+                <div class="ranking-score" id="rank-res-${p.id}">${p.total}점</div>
+            </div>
+        `).join('');
+    }
+
+    // 3. 플레이어 카드 렌더링
+    function renderPlayers() {
+        playersContainer.innerHTML = players.map(player => {
+            let catHtml = categories.map(cat => {
+                const data = player.values[cat.id];
+                return `
+                    <div class="category-row">
+                        <div class="category-title" style="color: ${cat.color}">${cat.name}</div>
+                        <div class="category-inputs">
+                            ⭐별 <input type="number" min="0" value="${data.star}" oninput="updateValue(${player.id}, '${cat.id}', 'star', this.value)">
+                            × ⬡타일 <input type="number" min="0" value="${data.val}" oninput="updateValue(${player.id}, '${cat.id}', 'val', this.value)">
+                            <span class="category-result" id="res-${player.id}-${cat.id}">= ${data.star * data.val}점</span>
+                        </div>
+                    </div>`;
+            }).join('');
+
             return `
-                <div class="category-row">
-                    <div class="category-title" style="color: ${cat.color}">${cat.name}</div>
-                    <div class="category-inputs">
-                        가치 <input type="number" min="0" value="${data.val}" oninput="updateValue(${player.id}, '${cat.id}', 'val', this.value)">
-                        × 별 <input type="number" min="0" value="${data.star}" oninput="updateValue(${player.id}, '${cat.id}', 'star', this.value)">
-                        <span class="category-result" id="res-${player.id}-${cat.id}">= ${data.val * data.star}점</span>
+                <div class="player-card">
+                    <div class="player-header">
+                        <input type="text" class="player-name-input" value="${player.name}" onchange="updateName(${player.id}, this.value)">
+                        ${players.length > 1 ? `<button class="delete-player" onclick="deletePlayer(${player.id})">&times;</button>` : ''}
+                    </div>
+                    ${catHtml}
+                    <div class="stone-row">
+                        <div>
+                            채석장 
+                            <input type="number" min="0" value="${player.stone}" oninput="updateStone(${player.id}, this.value)" style="width:40px">
+                            <label style="margin-left:8px; cursor:pointer">
+                                <input type="checkbox" ${player.stoneMission ? 'checked' : ''} onchange="toggleMission(${player.id}, this.checked)"> 미션완료
+                            </label>
+                        </div>
+                        <span id="stone-res-${player.id}">${player.stone * (player.stoneMission ? 5 : 1)}점</span>
+                    </div>
+                    <div class="total-row" id="total-${player.id}">
+                        <span>총점</span>
+                        <span>${calculateTotal(player)}점</span>
                     </div>
                 </div>`;
         }).join('');
+    }
 
-        return `
-            <div class="player-card">
-                <div class="player-header">
-                    <input type="text" class="player-name-input" value="${player.name}" onchange="updateName(${player.id}, this.value)">
-                    ${players.length > 1 ? `<button class="delete-player" onclick="deletePlayer(${player.id})">&times;</button>` : ''}
-                </div>
-                ${catHtml}
-                <div class="stone-row">
-                    <span>석재 보너스</span>
-                    <input type="number" min="0" value="${player.stone}" oninput="updateStone(${player.id}, this.value)">
-                </div>
-                <div class="total-row" id="total-${player.id}">
-                    <span>총점</span>
-                    <span>${calculateTotal(player)}점</span>
-                </div>
-            </div>`;
-    }).join('');
-}
+    // 4. 전역 업데이트 함수 (화면 전체 갱신 없이 값만 변경)
+    window.updateValue = (id, catId, field, val) => {
+        const player = players.find(p => p.id === id);
+        player.values[catId][field] = Number(val) || 0;
+        document.getElementById(`res-${id}-${catId}`).innerText = `= ${player.values[catId].star * player.values[catId].val}점`;
+        updateTotals(player);
+    };
 
-// 4. 전역 함수 수정 (전체 리렌더링 제거)
-window.updateName = (id, name) => {
-    players.find(p => p.id === id).name = name;
+    window.updateStone = (id, val) => {
+        const player = players.find(p => p.id === id);
+        player.stone = Number(val) || 0;
+        updateStoneDisplay(player);
+        updateTotals(player);
+    };
+
+    window.toggleMission = (id, isChecked) => {
+        const player = players.find(p => p.id === id);
+        player.stoneMission = isChecked;
+        updateStoneDisplay(player);
+        updateTotals(player);
+    };
+
+    function updateStoneDisplay(player) {
+        const score = player.stone * (player.stoneMission ? 5 : 1);
+        document.getElementById(`stone-res-${player.id}`).innerText = `${score}점`;
+    }
+
+    function updateTotals(player) {
+        document.getElementById(`total-${player.id}`).querySelector('span:last-child').innerText = `${calculateTotal(player)}점`;
+        renderRanking();
+    }
+
+    window.deletePlayer = (id) => {
+        players = players.filter(p => p.id !== id);
+        renderPlayers();
+        renderRanking();
+    };
+
+    // [기타 이벤트는 동일]
+    document.getElementById('add-player-btn').addEventListener('click', () => {
+        players.push({ id: Date.now(), name: `건축가 ${players.length + 1}`, values: { blue:{val:0,star:0}, yellow:{val:0,star:0}, red:{val:0,star:0}, purple:{val:0,star:0}, green:{val:0,star:0} }, stone: 0, stoneMission: false });
+        renderPlayers();
+        renderRanking();
+    });
+
+    document.getElementById('reset-btn').addEventListener('click', () => {
+        if (confirm('초기화하시겠습니까?')) {
+            players.forEach(p => { p.stone = 0; p.stoneMission = false; Object.keys(p.values).forEach(k => { p.values[k].val=0; p.values[k].star=0; }); });
+            renderPlayers();
+            renderRanking();
+        }
+    });
+
+    renderPlayers();
     renderRanking();
-};
-
-window.updateValue = (id, catId, field, val) => {
-    const player = players.find(p => p.id === id);
-    player.values[catId][field] = Number(val) || 0;
-    
-    // 전체를 다시 그리지 않고 특정 요소만 업데이트
-    const catResult = player.values[catId].val * player.values[catId].star;
-    document.getElementById(`res-${id}-${catId}`).innerText = `= ${catResult}점`;
-    document.getElementById(`total-${id}`).querySelector('span:last-child').innerText = `${calculateTotal(player)}점`;
-    
-    renderRanking(); // 랭킹은 다시 그릴 수 있음 (입력창과 무관함)
-};
-
-window.updateStone = (id, val) => {
-    const player = players.find(p => p.id === id);
-    player.stone = Number(val) || 0;
-    document.getElementById(`total-${id}`).querySelector('span:last-child').innerText = `${calculateTotal(player)}점`;
-    renderRanking();
-};
-
-window.deletePlayer = (id) => {
-    players = players.filter(p => p.id !== id);
-    renderPlayers(); // 삭제 시에는 전체 갱신 필요
-    renderRanking();
-};
-
-// [5. 버튼 이벤트 등 나머지 코드는 기존과 동일]
+</script>
