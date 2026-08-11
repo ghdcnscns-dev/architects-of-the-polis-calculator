@@ -1,20 +1,18 @@
-// [이전 코드 생략: 변수 정의 부분은 그대로 유지]
+// [기존 변수 및 1, 2번 함수는 그대로 사용]
 
-// 3. 플레이어 카드 렌더링 (입력 시 전체 리렌더링 방지)
+// 3. 플레이어 카드 렌더링 (구조 유지)
 function renderPlayers() {
     playersContainer.innerHTML = players.map(player => {
         let catHtml = categories.map(cat => {
             const data = player.values[cat.id];
-            // ID를 고유하게 생성하여 DOM 업데이트가 아닌 값만 변경되도록 유도
+            // ID를 부여하여 나중에 해당 위치만 찾아서 수정할 수 있게 함
             return `
                 <div class="category-row">
                     <div class="category-title" style="color: ${cat.color}">${cat.name}</div>
                     <div class="category-inputs">
-                        ⭐별 <input type="number" min="0" value="${data.star}" 
-                            oninput="updateValue(${player.id}, '${cat.id}', 'star', this.value, this)">
-                        × ⬡타일 <input type="number" min="0" value="${data.val}" 
-                            oninput="updateValue(${player.id}, '${cat.id}', 'val', this.value, this)">
-                        <span class="category-result" id="res-${player.id}-${cat.id}">= ${data.star * data.val}점</span>
+                        가치 <input type="number" min="0" value="${data.val}" oninput="updateValue(${player.id}, '${cat.id}', 'val', this.value)">
+                        × 별 <input type="number" min="0" value="${data.star}" oninput="updateValue(${player.id}, '${cat.id}', 'star', this.value)">
+                        <span class="category-result" id="res-${player.id}-${cat.id}">= ${data.val * data.star}점</span>
                     </div>
                 </div>`;
         }).join('');
@@ -38,20 +36,22 @@ function renderPlayers() {
     }).join('');
 }
 
-// 4. 개별 값만 업데이트 (전체 리렌더링 제거)
-window.updateValue = (id, catId, field, val, inputEl) => {
+// 4. 전역 함수 수정 (전체 리렌더링 제거)
+window.updateName = (id, name) => {
+    players.find(p => p.id === id).name = name;
+    renderRanking();
+};
+
+window.updateValue = (id, catId, field, val) => {
     const player = players.find(p => p.id === id);
     player.values[catId][field] = Number(val) || 0;
     
-    // 1. 해당 구역의 점수만 즉시 계산 및 업데이트
-    const catResult = player.values[catId].star * player.values[catId].val;
+    // 전체를 다시 그리지 않고 특정 요소만 업데이트
+    const catResult = player.values[catId].val * player.values[catId].star;
     document.getElementById(`res-${id}-${catId}`).innerText = `= ${catResult}점`;
-    
-    // 2. 전체 총점 업데이트
     document.getElementById(`total-${id}`).querySelector('span:last-child').innerText = `${calculateTotal(player)}점`;
     
-    // 3. 랭킹만 갱신 (전체 카드는 다시 그리지 않음)
-    renderRanking();
+    renderRanking(); // 랭킹은 다시 그릴 수 있음 (입력창과 무관함)
 };
 
 window.updateStone = (id, val) => {
@@ -61,4 +61,10 @@ window.updateStone = (id, val) => {
     renderRanking();
 };
 
-// [삭제/추가 함수 등은 기존 그대로 유지]
+window.deletePlayer = (id) => {
+    players = players.filter(p => p.id !== id);
+    renderPlayers(); // 삭제 시에는 전체 갱신 필요
+    renderRanking();
+};
+
+// [5. 버튼 이벤트 등 나머지 코드는 기존과 동일]
