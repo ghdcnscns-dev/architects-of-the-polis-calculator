@@ -58,43 +58,52 @@
         .ranking-name { font-weight: bold; font-size: 0.8rem; }
         .ranking-score { font-size: 1.1rem; font-weight: 800; color: #fff; }
 
-        .players-container { display: flex; flex-direction: column; gap: 15px; }
+        .main-layout { display: flex; flex-direction: column; gap: 15px; }
 
-        .player-card {
+        .group-section {
             background: var(--card-bg); border: 1px solid var(--border-color);
             border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px;
         }
 
-        .player-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; }
+        .group-title {
+            font-size: 0.9rem; font-weight: bold; padding-bottom: 6px;
+            border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;
+        }
+
+        .player-score-row {
+            background: #1e293b; padding: 8px 10px; border-radius: 6px;
+            display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; gap: 8px;
+        }
+
+        .player-name-display {
+            font-weight: bold; width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+
+        .inputs-group { display: flex; align-items: center; gap: 6px; }
+
+        .inputs-group input {
+            width: 38px; padding: 4px 0; text-align: center;
+            background: #334155; border: 1px solid var(--border-color);
+            border-radius: 4px; color: #fff; font-size: 0.85rem;
+        }
+
+        .calc-result { font-weight: bold; color: #60a5fa; width: 45px; text-align: right; }
+
+        .players-manage-card {
+            background: var(--card-bg); border: 1px solid var(--border-color);
+            border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px;
+        }
+
+        .players-manage-header { font-size: 0.9rem; font-weight: bold; color: #94a3b8; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; }
+
+        .player-manage-row {
+            display: flex; justify-content: space-between; align-items: center;
+            background: #1e293b; padding: 6px 10px; border-radius: 6px;
+        }
 
         .player-name-input {
-            font-size: 1rem; font-weight: bold; border: none;
-            background: transparent; color: #fff; width: 100px;
-        }
-
-        .category-row {
-            background: #1e293b; padding: 6px 8px; border-radius: 6px;
-            display: flex; flex-direction: column; gap: 4px;
-        }
-
-        .category-inputs {
-            display: flex; align-items: center; gap: 4px; font-size: 0.8rem;
-        }
-
-        .category-inputs input {
-            width: 35px; padding: 4px 0; text-align: center;
-            background: #334155; border: 1px solid var(--border-color);
-            border-radius: 4px; color: #fff;
-        }
-
-        .category-result { margin-left: auto; font-weight: bold; color: #60a5fa; font-size: 0.9rem; }
-
-        .stone-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 8px; font-size: 0.9rem; font-weight: 600; }
-
-        .total-row {
-            display: flex; justify-content: space-between; align-items: center;
-            background: #1e293b; padding: 8px 12px; border-radius: 8px;
-            font-weight: 800; color: #60a5fa; font-size: 1rem;
+            font-size: 0.9rem; font-weight: bold; border: none;
+            background: transparent; color: #fff; width: 120px;
         }
     </style>
 </head>
@@ -104,17 +113,17 @@
     <header>
         <h1>🏛️ 폴리스 점수 계산기</h1>
         <div class="actions">
-            <button class="btn-primary" id="add-player-btn">+ 추가</button>
+            <button class="btn-primary" id="add-player-btn">+ 인원 추가</button>
             <button class="btn-danger" id="reset-btn">초기화</button>
         </div>
     </header>
 
     <div class="scoreboard-summary">
-        <h2>🏆 실시간 순위</h2>
+        <h2>🏆 실시간 총합 순위</h2>
         <div class="ranking-list" id="ranking-list"></div>
     </div>
 
-    <div class="players-container" id="players-container"></div>
+    <div class="main-layout" id="main-layout"></div>
 </div>
 
 <script>
@@ -131,7 +140,7 @@
         { id: 2, name: '건축가 2', values: { blue: {val:0, star:0}, yellow: {val:0, star:0}, red: {val:0, star:0}, purple: {val:0, star:0}, green: {val:0, star:0} }, stone: 0, stoneMission: false }
     ];
 
-    const playersContainer = document.getElementById('players-container');
+    const mainLayout = document.getElementById('main-layout');
     const rankingList = document.getElementById('ranking-list');
 
     function calculateTotal(player) {
@@ -151,59 +160,88 @@
         `).join('');
     }
 
-    function renderPlayers() {
-        playersContainer.innerHTML = players.map(player => `
-            <div class="player-card">
-                <div class="player-header">
-                    <input type="text" class="player-name-input" value="${player.name}" onchange="updateName(${player.id}, this.value)">
-                    ${players.length > 1 ? `<button class="delete-player" onclick="deletePlayer(${player.id})" style="background:none; color:#94a3b8;">✕</button>` : ''}
-                </div>
-                ${categories.map(cat => `
-                    <div class="category-row">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span style="color:${cat.color}; font-size:0.75rem; font-weight:bold;">${cat.name}</span>
-                            <label style="font-size:0.75rem; color:#94a3b8; cursor:pointer;">
-                                <input type="checkbox" onchange="toggleCategoryCheck(${player.id}, '${cat.id}', this.checked)"> 개별체크
-                            </label>
+    function renderApp() {
+        renderRanking();
+
+        let html = '';
+
+        // 1. 각 그룹별 섹션 렌더링
+        categories.forEach(cat => {
+            html += `
+                <div class="group-section">
+                    <div class="group-title" style="color: ${cat.color};">${cat.name}</div>
+                    ${players.map(player => `
+                        <div class="player-score-row">
+                            <span class="player-name-display">${player.name}</span>
+                            <div class="inputs-group">
+                                별<input type="number" value="${player.values[cat.id].star}" oninput="updateValue(${player.id}, '${cat.id}', 'star', this.value)">
+                                타일<input type="number" value="${player.values[cat.id].val}" oninput="updateValue(${player.id}, '${cat.id}', 'val', this.value)">
+                                <span class="calc-result" id="res-${player.id}-${cat.id}">${player.values[cat.id].star * player.values[cat.id].val}점</span>
+                            </div>
                         </div>
-                        <div class="category-inputs">
-                            별<input type="number" value="${player.values[cat.id].star}" oninput="updateValue(${player.id}, '${cat.id}', 'star', this.value)">
-                            타일<input type="number" value="${player.values[cat.id].val}" oninput="updateValue(${player.id}, '${cat.id}', 'val', this.value)">
-                            <span class="category-result" id="res-${player.id}-${cat.id}">${player.values[cat.id].star * player.values[cat.id].val}점</span>
+                    `).join('')}
+                </div>
+            `;
+        });
+
+        // 2. 채석장 섹션 렌더링
+        html += `
+            <div class="group-section">
+                <div class="group-title" style="color: #cbd5e1;">🪨 채석장 및 미션</div>
+                ${players.map(player => `
+                    <div class="player-score-row">
+                        <span class="player-name-display">${player.name}</span>
+                        <div class="inputs-group">
+                            갯수<input type="number" value="${player.stone}" oninput="updateStone(${player.id}, this.value)">
+                            <label style="font-size: 0.75rem; cursor: pointer;"><input type="checkbox" ${player.stoneMission ? 'checked' : ''} onchange="toggleMission(${player.id}, this.checked)"> 미션(5점)</label>
+                            <span class="calc-result" id="stone-res-${player.id}">${player.stone * (player.stoneMission ? 5 : 1)}점</span>
                         </div>
                     </div>
                 `).join('')}
-                <div class="stone-row">
-                    <div>채석장 <input type="number" value="${player.stone}" oninput="updateStone(${player.id}, this.value)" style="width:35px; background:#1e293b; color:#fff; border:1px solid #475569; text-align:center;">
-                        <label style="font-size:0.75rem;"><input type="checkbox" ${player.stoneMission?'checked':''} onchange="toggleMission(${player.id}, this.checked)"> 미션</label>
-                    </div>
-                    <span id="stone-res-${player.id}">${player.stone * (player.stoneMission ? 5 : 1)}점</span>
-                </div>
-                <div class="total-row" id="total-${player.id}"><span>총점</span><span>${calculateTotal(player)}점</span></div>
             </div>
-        `).join('');
+        `;
+
+        // 3. 인원 이름 관리 섹션 렌더링
+        html += `
+            <div class="players-manage-card">
+                <div class="players-manage-header">👤 건축가 이름 관리 / 인원 삭제</div>
+                ${players.map(player => `
+                    <div class="player-manage-row">
+                        <input type="text" class="player-name-input" value="${player.name}" onchange="updateName(${player.id}, this.value)">
+                        ${players.length > 1 ? `<button class="delete-player" onclick="deletePlayer(${player.id})" style="background:none; color:#94a3b8; cursor:pointer;">✕ 삭제</button>` : ''}
+                    </div>
+                `).join('')}
+            </div>
+        `;
+
+        mainLayout.innerHTML = html;
     }
 
-    window.updateName = (id, val) => { players.find(p=>p.id===id).name = val; renderRanking(); };
+    window.updateName = (id, val) => { players.find(p=>p.id===id).name = val; renderApp(); };
     window.updateValue = (id, cId, f, v) => {
         let p = players.find(p=>p.id===id); p.values[cId][f] = Number(v);
         document.getElementById(`res-${id}-${cId}`).innerText = `${p.values[cId].star * p.values[cId].val}점`;
-        updateTotals(p);
+        renderRanking();
     };
-    window.toggleCategoryCheck = (id, cId, checked) => {
-        // 각 그룹별 개별 체크 상태에 따른 부가 로직이나 시각적 처리가 필요할 경우 이곳에 확장 가능합니다.
-        console.log(`플레이어 ${id}의 ${cId} 그룹 체크 상태: ${checked}`);
+    window.updateStone = (id, v) => {
+        let p = players.find(p=>p.id===id); p.stone = Number(v);
+        document.getElementById(`stone-res-${id}`).innerText = `${p.stone * (p.stoneMission ? 5 : 1)}점`;
+        renderRanking();
     };
-    window.updateStone = (id, v) => { let p = players.find(p=>p.id===id); p.stone = Number(v); updateStoneDisplay(p); updateTotals(p); };
-    window.toggleMission = (id, c) => { let p = players.find(p=>p.id===id); p.stoneMission = c; updateStoneDisplay(p); updateTotals(p); };
+    window.toggleMission = (id, c) => {
+        let p = players.find(p=>p.id===id); p.stoneMission = c;
+        document.getElementById(`stone-res-${id}`).innerText = `${p.stone * (p.stoneMission ? 5 : 1)}점`;
+        renderRanking();
+    };
+    window.deletePlayer = (id) => { players = players.filter(p=>p.id!==id); renderApp(); };
     
-    function updateStoneDisplay(p) { document.getElementById(`stone-res-${p.id}`).innerText = `${p.stone * (p.stoneMission ? 5 : 1)}점`; }
-    function updateTotals(p) { document.getElementById(`total-${p.id}`).lastElementChild.innerText = `${calculateTotal(p)}점`; renderRanking(); }
-    window.deletePlayer = (id) => { players = players.filter(p=>p.id!==id); renderPlayers(); renderRanking(); };
-    document.getElementById('add-player-btn').onclick = () => { players.push({id:Date.now(), name:'건축가', values:{blue:{val:0,star:0},yellow:{val:0,star:0},red:{val:0,star:0},purple:{val:0,star:0},green:{val:0,star:0}}, stone:0, stoneMission:false}); renderPlayers(); renderRanking(); };
+    document.getElementById('add-player-btn').onclick = () => { 
+        players.push({id:Date.now(), name:`건축가 ${players.length + 1}`, values:{blue:{val:0,star:0},yellow:{val:0,star:0},red:{val:0,star:0},purple:{val:0,star:0},green:{val:0,star:0}}, stone:0, stoneMission:false}); 
+        renderApp(); 
+    };
     document.getElementById('reset-btn').onclick = () => { if(confirm('초기화하시겠습니까?')) location.reload(); };
 
-    renderPlayers(); renderRanking();
+    renderApp();
 </script>
 </body>
 </html>
