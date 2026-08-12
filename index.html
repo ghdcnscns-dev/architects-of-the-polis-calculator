@@ -18,7 +18,7 @@
             background-color: var(--bg-color);
             color: var(--text-color);
             margin: 0;
-            padding: 10px; /* 모바일용 여백 */
+            padding: 10px;
         }
 
         .container { max-width: 600px; margin: 0 auto; }
@@ -160,7 +160,12 @@
                 </div>
                 ${categories.map(cat => `
                     <div class="category-row">
-                        <div style="color:${cat.color}; font-size:0.75rem; font-weight:bold;">${cat.name}</div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="color:${cat.color}; font-size:0.75rem; font-weight:bold;">${cat.name}</span>
+                            <label style="font-size:0.75rem; color:#94a3b8; cursor:pointer;">
+                                <input type="checkbox" onchange="toggleCategoryCheck(${player.id}, '${cat.id}', this.checked)"> 개별체크
+                            </label>
+                        </div>
                         <div class="category-inputs">
                             별<input type="number" value="${player.values[cat.id].star}" oninput="updateValue(${player.id}, '${cat.id}', 'star', this.value)">
                             타일<input type="number" value="${player.values[cat.id].val}" oninput="updateValue(${player.id}, '${cat.id}', 'val', this.value)">
@@ -184,6 +189,10 @@
         let p = players.find(p=>p.id===id); p.values[cId][f] = Number(v);
         document.getElementById(`res-${id}-${cId}`).innerText = `${p.values[cId].star * p.values[cId].val}점`;
         updateTotals(p);
+    };
+    window.toggleCategoryCheck = (id, cId, checked) => {
+        // 각 그룹별 개별 체크 상태에 따른 부가 로직이나 시각적 처리가 필요할 경우 이곳에 확장 가능합니다.
+        console.log(`플레이어 ${id}의 ${cId} 그룹 체크 상태: ${checked}`);
     };
     window.updateStone = (id, v) => { let p = players.find(p=>p.id===id); p.stone = Number(v); updateStoneDisplay(p); updateTotals(p); };
     window.toggleMission = (id, c) => { let p = players.find(p=>p.id===id); p.stoneMission = c; updateStoneDisplay(p); updateTotals(p); };
