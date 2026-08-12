@@ -124,7 +124,7 @@
 
     <div class="main-layout" id="main-layout"></div>
 
-    <div class="mt-8 pt-4 border-t border-slate-700 text-center" style="margin-top: 24px; padding-top: 12px; border-top: 1px solid var(--border-color); text-align: center;">
+    <div style="margin-top: 24px; padding-top: 12px; border-top: 1px solid var(--border-color); text-align: center;">
         <p style="font-size: 0.75rem; color: #94a3b8; margin: 0;">Made by 천상민</p>
     </div>
 </div>
@@ -177,8 +177,8 @@
                         <div class="player-score-row">
                             <input type="text" class="player-name-input-inline" value="${player.name}" oninput="updateName(${player.id}, this.value)">
                             <div class="inputs-group">
-                                별<input type="number" value="${player.values[cat.id].star}" oninput="updateValue(${player.id}, '${cat.id}', 'star', this.value)">
-                                타일<input type="number" value="${player.values[cat.id].val}" oninput="updateValue(${player.id}, '${cat.id}', 'val', this.value)">
+                                별<input type="number" value="${player.values[cat.id].star === 0 ? '' : player.values[cat.id].star}" oninput="updateValue(${player.id}, '${cat.id}', 'star', this.value)">
+                                타일<input type="number" value="${player.values[cat.id].val === 0 ? '' : player.values[cat.id].val}" oninput="updateValue(${player.id}, '${cat.id}', 'val', this.value)">
                                 <span class="calc-result" id="res-${player.id}-${cat.id}">${player.values[cat.id].star * player.values[cat.id].val}점</span>
                             </div>
                         </div>
@@ -195,7 +195,7 @@
                     <div class="player-score-row">
                         <input type="text" class="player-name-input-inline" value="${player.name}" oninput="updateName(${player.id}, this.value)">
                         <div class="inputs-group">
-                            갯수<input type="number" value="${player.stone}" oninput="updateStone(${player.id}, this.value)">
+                            갯수<input type="number" value="${player.stone === 0 ? '' : player.stone}" oninput="updateStone(${player.id}, this.value)">
                             <label style="font-size: 0.75rem; cursor: pointer;"><input type="checkbox" ${player.stoneMission ? 'checked' : ''} onchange="toggleMission(${player.id}, this.checked)"> 미션(5점)</label>
                             <span class="calc-result" id="stone-res-${player.id}">${player.stone * (player.stoneMission ? 5 : 1)}점</span>
                         </div>
@@ -231,12 +231,14 @@
         }
     };
     window.updateValue = (id, cId, f, v) => {
-        let p = players.find(p=>p.id===id); p.values[cId][f] = Number(v);
+        let p = players.find(p=>p.id===id); 
+        p.values[cId][f] = v === '' ? 0 : Number(v);
         document.getElementById(`res-${id}-${cId}`).innerText = `${p.values[cId].star * p.values[cId].val}점`;
         renderRanking();
     };
     window.updateStone = (id, v) => {
-        let p = players.find(p=>p.id===id); p.stone = Number(v);
+        let p = players.find(p=>p.id===id); 
+        p.stone = v === '' ? 0 : Number(v);
         document.getElementById(`stone-res-${id}`).innerText = `${p.stone * (p.stoneMission ? 5 : 1)}점`;
         renderRanking();
     };
