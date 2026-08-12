@@ -75,8 +75,12 @@
             display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; gap: 8px;
         }
 
-        .player-name-display {
-            font-weight: bold; width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        .player-name-input-inline {
+            font-size: 0.85rem; font-weight: bold; border: 1px solid transparent;
+            background: rgba(255, 255, 255, 0.05); color: #fff; width: 85px; padding: 4px 6px; border-radius: 4px;
+        }
+        .player-name-input-inline:focus {
+            border-color: var(--primary-color); background: #334155; outline: none;
         }
 
         .inputs-group { display: flex; align-items: center; gap: 6px; }
@@ -99,11 +103,6 @@
         .player-manage-row {
             display: flex; justify-content: space-between; align-items: center;
             background: #1e293b; padding: 6px 10px; border-radius: 6px;
-        }
-
-        .player-name-input {
-            font-size: 0.9rem; font-weight: bold; border: none;
-            background: transparent; color: #fff; width: 120px;
         }
     </style>
 </head>
@@ -172,7 +171,7 @@
                     <div class="group-title" style="color: ${cat.color};">${cat.name}</div>
                     ${players.map(player => `
                         <div class="player-score-row">
-                            <span class="player-name-display">${player.name}</span>
+                            <input type="text" class="player-name-input-inline" value="${player.name}" oninput="updateName(${player.id}, this.value)">
                             <div class="inputs-group">
                                 별<input type="number" value="${player.values[cat.id].star}" oninput="updateValue(${player.id}, '${cat.id}', 'star', this.value)">
                                 타일<input type="number" value="${player.values[cat.id].val}" oninput="updateValue(${player.id}, '${cat.id}', 'val', this.value)">
@@ -190,7 +189,7 @@
                 <div class="group-title" style="color: #cbd5e1;">🪨 채석장 및 미션</div>
                 ${players.map(player => `
                     <div class="player-score-row">
-                        <span class="player-name-display">${player.name}</span>
+                        <input type="text" class="player-name-input-inline" value="${player.name}" oninput="updateName(${player.id}, this.value)">
                         <div class="inputs-group">
                             갯수<input type="number" value="${player.stone}" oninput="updateStone(${player.id}, this.value)">
                             <label style="font-size: 0.75rem; cursor: pointer;"><input type="checkbox" ${player.stoneMission ? 'checked' : ''} onchange="toggleMission(${player.id}, this.checked)"> 미션(5점)</label>
@@ -201,14 +200,14 @@
             </div>
         `;
 
-        // 3. 인원 이름 관리 섹션 렌더링
+        // 3. 인원 삭제 관리 섹션 렌더링
         html += `
             <div class="players-manage-card">
-                <div class="players-manage-header">👤 건축가 이름 관리 / 인원 삭제</div>
+                <div class="players-manage-header">👤 인원 삭제 관리</div>
                 ${players.map(player => `
                     <div class="player-manage-row">
-                        <input type="text" class="player-name-input" value="${player.name}" onchange="updateName(${player.id}, this.value)">
-                        ${players.length > 1 ? `<button class="delete-player" onclick="deletePlayer(${player.id})" style="background:none; color:#94a3b8; cursor:pointer;">✕ 삭제</button>` : ''}
+                        <span style="font-weight: bold; font-size: 0.9rem;">${player.name}</span>
+                        ${players.length > 1 ? `<button class="delete-player" onclick="deletePlayer(${player.id})" style="background:none; color:#94a3b8; cursor:pointer;">✕ 삭제</button>` : '<span style="font-size:0.8rem; color:#94a3b8;">삭제 불가 (최소 1명)</span>'}
                     </div>
                 `).join('')}
             </div>
@@ -217,7 +216,17 @@
         mainLayout.innerHTML = html;
     }
 
-    window.updateName = (id, val) => { players.find(p=>p.id===id).name = val; renderApp(); };
+    window.updateName = (id, val) => {
+        let p = players.find(p=>p.id===id);
+        if(p) {
+            p.name = val;
+            renderRanking();
+            // 입력 중에 포커스가 풀리지 않도록 전체 렌더링 대신 이름 인풋만 동기화하거나 렌더링 제어
+            document.querySelectorAll(`input[oninput*="updateName(${id},"]`).forEach(input => {
+                if (input.value !== val) input.value = val;
+            });
+        }
+    };
     window.updateValue = (id, cId, f, v) => {
         let p = players.find(p=>p.id===id); p.values[cId][f] = Number(v);
         document.getElementById(`res-${id}-${cId}`).innerText = `${p.values[cId].star * p.values[cId].val}점`;
