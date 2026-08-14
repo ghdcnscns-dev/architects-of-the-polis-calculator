@@ -2,107 +2,326 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>폴리스의 건축가들 점수 계산기</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>폴리스의 건축가들: 마스터 공방 점수 계산기</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Nanum+Gothic:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #60a5fa;
-            --bg-color: #1e293b;
-            --card-bg: #334155;
-            --border-color: #475569;
-            --text-color: #f1f5f9;
+            --bg-deep: #0f1115;
+            --bg-color: #171a21;
+            --card-bg: #212631;
+            --panel-border: #303642;
+            --panel-border-glow: #485263;
+            --accent-gold: #d4af37;
+            --accent-gold-dark: #997a15;
+            --accent-blue: #58a6ff;
+            --accent-yellow: #f1e05a;
+            --accent-red: #ff7b72;
+            --accent-purple: #bc8cff;
+            --accent-green: #3fb950;
+            --text-main: #f0f6fc;
+            --text-muted: #8b949e;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            margin: 0;
-            padding: 10px;
+            font-family: 'Nanum Gothic', sans-serif;
+            background-color: var(--bg-deep);
+            color: var(--text-main);
+            background-image: 
+                radial-gradient(circle at 50% 5%, rgba(212, 175, 55, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 50% 95%, rgba(15, 17, 21, 0.95) 0%, #0f1115 100%);
+            min-height: 100vh;
+            padding: 12px;
+            display: flex;
+            justify-content: center;
         }
 
-        .container { max-width: 600px; margin: 0 auto; }
+        .container { 
+            width: 100%; 
+            max-width: 480px; 
+            margin: 0 auto; 
+        }
 
         header {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 16px; gap: 8px;
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--panel-border);
+            padding-bottom: 15px;
+            position: relative;
         }
 
-        h1 { font-size: 1.1rem; margin: 0; color: #ffffff; }
+        header::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent-gold), transparent);
+        }
 
-        .actions { display: flex; gap: 5px; }
+        h1 { 
+            font-family: 'Cinzel', serif;
+            font-size: 1.4rem; 
+            margin: 0 0 6px 0; 
+            color: var(--accent-gold); 
+            letter-spacing: 1.5px;
+            text-shadow: 0 2px 6px rgba(0,0,0,0.6);
+            font-weight: 900;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+
+        .creator {
+            color: var(--accent-gold);
+            font-size: 0.72rem;
+            font-family: 'Cinzel', serif;
+            letter-spacing: 1px;
+            opacity: 0.85;
+        }
+
+        .actions { 
+            display: flex; 
+            gap: 8px; 
+            margin-top: 14px;
+            justify-content: center;
+        }
 
         button {
-            cursor: pointer; padding: 6px 12px; font-size: 0.85rem; font-weight: 600;
-            border-radius: 6px; border: none;
+            cursor: pointer; 
+            padding: 9px 14px; 
+            font-size: 0.85rem; 
+            font-weight: 700;
+            border-radius: 6px; 
+            border: none;
+            transition: all 0.2s ease;
+            font-family: 'Nanum Gothic', sans-serif;
         }
 
-        .btn-primary { background-color: #3b82f6; color: white; }
-        .btn-danger { background-color: #94a3b8; color: #1e293b; }
+        .btn-primary { 
+            background: linear-gradient(135deg, #d4af37 0%, #997a15 100%); 
+            color: #171a21;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+        }
+
+        .btn-danger { 
+            background: transparent; 
+            border: 1px solid var(--panel-border);
+            color: var(--text-muted); 
+        }
+
+        button:hover {
+            filter: brightness(1.1);
+            transform: translateY(-1px);
+        }
+
+        .btn-danger:hover {
+            border-color: #ff7b72;
+            color: #ff7b72;
+            background: rgba(255, 123, 114, 0.05);
+        }
 
         .scoreboard-summary {
-            background: var(--card-bg); border: 1px solid var(--border-color);
-            border-radius: 12px; padding: 12px; margin-bottom: 16px;
+            background: var(--card-bg); 
+            border: 1px solid var(--panel-border);
+            border-radius: 10px; 
+            padding: 14px; 
+            margin-bottom: 16px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
         }
 
-        .scoreboard-summary h2 { font-size: 0.95rem; margin-top: 0; margin-bottom: 10px; color: #94a3b8; }
+        .scoreboard-summary h2 { 
+            font-family: 'Cinzel', serif;
+            font-size: 0.9rem; 
+            margin-top: 0; 
+            margin-bottom: 10px; 
+            color: var(--text-muted); 
+            letter-spacing: 0.5px;
+        }
 
-        .ranking-list { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+        .ranking-list { 
+            display: flex; 
+            gap: 8px; 
+            overflow-x: auto; 
+            padding-bottom: 4px; 
+        }
+
+        .ranking-list::-webkit-scrollbar {
+            height: 4px;
+        }
+        .ranking-list::-webkit-scrollbar-thumb {
+            background: var(--panel-border);
+            border-radius: 2px;
+        }
 
         .ranking-item {
-            background: #475569; padding: 8px 12px; border-radius: 8px;
-            min-width: 100px; flex-shrink: 0; border-left: 4px solid #cbd5e1;
+            background: #171a21; 
+            padding: 8px 12px; 
+            border-radius: 8px;
+            min-width: 105px; 
+            flex-shrink: 0; 
+            border-left: 4px solid var(--panel-border);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
         }
 
-        .ranking-item.rank-1 { border-left-color: #eab308; background: #451a03; }
-        .ranking-name { font-weight: bold; font-size: 0.8rem; }
-        .ranking-score { font-size: 1.1rem; font-weight: 800; color: #fff; }
+        .ranking-item.rank-1 { 
+            border-left-color: var(--accent-gold); 
+            background: linear-gradient(135deg, #2a2512 0%, #171a21 100%);
+        }
 
-        .main-layout { display: flex; flex-direction: column; gap: 15px; }
+        .ranking-name { 
+            font-weight: bold; 
+            font-size: 0.78rem; 
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .ranking-item.rank-1 .ranking-name {
+            color: var(--accent-gold);
+        }
+
+        .ranking-score { 
+            font-size: 1.15rem; 
+            font-weight: 900; 
+            color: #fff; 
+            font-family: 'Cinzel', serif;
+            margin-top: 2px;
+        }
+
+        .main-layout { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 14px; 
+        }
 
         .group-section {
-            background: var(--card-bg); border: 1px solid var(--border-color);
-            border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px;
+            background: var(--card-bg); 
+            border: 1px solid var(--panel-border);
+            border-radius: 10px; 
+            padding: 14px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 10px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
         }
 
         .group-title {
-            font-size: 0.9rem; font-weight: bold; padding-bottom: 6px;
-            border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;
+            font-size: 0.88rem; 
+            font-weight: bold; 
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--panel-border); 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            font-family: 'Cinzel', serif;
+            letter-spacing: 0.5px;
         }
 
         .player-score-row {
-            background: #1e293b; padding: 8px 10px; border-radius: 6px;
-            display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; gap: 8px;
+            background: #171a21; 
+            padding: 8px 10px; 
+            border-radius: 6px;
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            font-size: 0.85rem; 
+            gap: 8px;
+            border: 1px solid rgba(255,255,255,0.02);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
         }
 
         .player-name-input-inline {
-            font-size: 0.85rem; font-weight: bold; border: 1px solid transparent;
-            background: rgba(255, 255, 255, 0.05); color: #fff; width: 85px; padding: 4px 6px; border-radius: 4px;
+            font-size: 0.85rem; 
+            font-weight: bold; 
+            border: 1px solid transparent;
+            background: rgba(255, 255, 255, 0.03); 
+            color: #fff; 
+            width: 82px; 
+            padding: 5px 6px; 
+            border-radius: 4px;
         }
+        
         .player-name-input-inline:focus {
-            border-color: var(--primary-color); background: #334155; outline: none;
+            border-color: var(--accent-gold); 
+            background: #212631; 
+            outline: none;
         }
 
-        .inputs-group { display: flex; align-items: center; gap: 6px; }
-
-        .inputs-group input {
-            width: 38px; padding: 4px 0; text-align: center;
-            background: #334155; border: 1px solid var(--border-color);
-            border-radius: 4px; color: #fff; font-size: 0.85rem;
+        .inputs-group { 
+            display: flex; 
+            align-items: center; 
+            gap: 6px; 
         }
 
-        .calc-result { font-weight: bold; color: #60a5fa; width: 45px; text-align: right; }
+        .inputs-group input[type="number"] {
+            width: 38px; 
+            padding: 5px 0; 
+            text-align: center;
+            background: #212631; 
+            border: 1px solid var(--panel-border);
+            border-radius: 4px; 
+            color: #fff; 
+            font-size: 0.85rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .inputs-group input[type="number"]:focus {
+            border-color: var(--accent-gold);
+        }
+
+        .calc-result { 
+            font-weight: bold; 
+            color: var(--accent-gold); 
+            width: 48px; 
+            text-align: right; 
+            font-family: 'Cinzel', serif;
+            font-size: 0.9rem;
+        }
 
         .players-manage-card {
-            background: var(--card-bg); border: 1px solid var(--border-color);
-            border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px;
+            background: var(--card-bg); 
+            border: 1px solid var(--panel-border);
+            border-radius: 10px; 
+            padding: 14px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 8px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
         }
 
-        .players-manage-header { font-size: 0.9rem; font-weight: bold; color: #94a3b8; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; }
+        .players-manage-header { 
+            font-size: 0.85rem; 
+            font-weight: bold; 
+            color: var(--text-muted); 
+            border-bottom: 1px solid var(--panel-border); 
+            padding-bottom: 8px; 
+            font-family: 'Cinzel', serif;
+        }
 
         .player-manage-row {
-            display: flex; justify-content: space-between; align-items: center;
-            background: #1e293b; padding: 6px 10px; border-radius: 6px;
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            background: #171a21; 
+            padding: 8px 12px; 
+            border-radius: 6px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
         }
     </style>
 </head>
@@ -110,32 +329,34 @@
 
 <div class="container">
     <header>
-        <h1>🏛️ 폴리스 점수 계산기</h1>
+        <h1>🏛️ 폴리스의 건축가들</h1>
+        <div class="subtitle">마스터 공방 점수 계측기</div>
+        <div class="creator">제작자 : 천상민</div>
         <div class="actions">
-            <button class="btn-primary" id="add-player-btn">+ 인원 추가</button>
-            <button class="btn-danger" id="reset-btn">초기화</button>
+            <button class="btn-primary" id="add-player-btn">+ 건축가 영입</button>
+            <button class="btn-danger" id="reset-btn">설계도 초기화</button>
         </div>
     </header>
 
     <div class="scoreboard-summary">
-        <h2>🏆 실시간 총합 순위</h2>
+        <h2>🏆 실시간 마스터 순위</h2>
         <div class="ranking-list" id="ranking-list"></div>
     </div>
 
     <div class="main-layout" id="main-layout"></div>
 
-    <div style="margin-top: 24px; padding-top: 12px; border-top: 1px solid var(--border-color); text-align: center;">
-        <p style="font-size: 0.75rem; color: #94a3b8; margin: 0;">Made by 천상민</p>
+    <div style="margin-top: 24px; padding-top: 12px; border-top: 1px solid var(--panel-border); text-align: center;">
+        <p style="font-size: 0.72rem; color: var(--text-muted); font-family: 'Cinzel', serif; letter-spacing: 0.5px;">Architects of the Polis · Master Tool</p>
     </div>
 </div>
 
 <script>
     const categories = [
-        { id: 'blue', name: '🟦 주거지 : 가장 큰 그룹안의 점수', color: '#60a5fa' },
-        { id: 'yellow', name: '🟨 시장 : 따로 떨어진 점수', color: '#fbbf24' },
-        { id: 'red', name: '🟥 병영 : 가장자리의 점수', color: '#f87171' },
-        { id: 'purple', name: '🟪 신전 : 완전히 둘러싸인 점수', color: '#a78bfa' },
-        { id: 'green', name: '🟩 정원 : 모든 점수', color: '#34d399' }
+        { id: 'blue', name: '🟦 주거지 : 가장 큰 그룹안의 점수', color: '#58a6ff' },
+        { id: 'yellow', name: '🟨 시장 : 따로 떨어진 점수', color: '#f1e05a' },
+        { id: 'red', name: '🟥 병영 : 가장자리의 점수', color: '#ff7b72' },
+        { id: 'purple', name: '🟪 신전 : 완전히 둘러싸인 점수', color: '#bc8cff' },
+        { id: 'green', name: '🟩 정원 : 모든 점수', color: '#3fb950' }
     ];
 
     let players = [
@@ -177,8 +398,8 @@
                         <div class="player-score-row">
                             <input type="text" class="player-name-input-inline" value="${player.name}" oninput="updateName(${player.id}, this.value)">
                             <div class="inputs-group">
-                                별<input type="number" value="${player.values[cat.id].star === 0 ? '' : player.values[cat.id].star}" oninput="updateValue(${player.id}, '${cat.id}', 'star', this.value)">
-                                타일<input type="number" value="${player.values[cat.id].val === 0 ? '' : player.values[cat.id].val}" oninput="updateValue(${player.id}, '${cat.id}', 'val', this.value)">
+                                <span style="font-size: 0.75rem; color: var(--text-muted);">별</span><input type="number" value="${player.values[cat.id].star === 0 ? '' : player.values[cat.id].star}" oninput="updateValue(${player.id}, '${cat.id}', 'star', this.value)">
+                                <span style="font-size: 0.75rem; color: var(--text-muted);">타일</span><input type="number" value="${player.values[cat.id].val === 0 ? '' : player.values[cat.id].val}" oninput="updateValue(${player.id}, '${cat.id}', 'val', this.value)">
                                 <span class="calc-result" id="res-${player.id}-${cat.id}">${player.values[cat.id].star * player.values[cat.id].val}점</span>
                             </div>
                         </div>
@@ -190,13 +411,13 @@
         // 2. 채석장 섹션 렌더링
         html += `
             <div class="group-section">
-                <div class="group-title" style="color: #cbd5e1;">🪨 채석장 및 미션</div>
+                <div class="group-title" style="color: #c9d1d9;">🪨 채석장 및 미션</div>
                 ${players.map(player => `
                     <div class="player-score-row">
                         <input type="text" class="player-name-input-inline" value="${player.name}" oninput="updateName(${player.id}, this.value)">
                         <div class="inputs-group">
-                            갯수<input type="number" value="${player.stone === 0 ? '' : player.stone}" oninput="updateStone(${player.id}, this.value)">
-                            <label style="font-size: 0.75rem; cursor: pointer;"><input type="checkbox" ${player.stoneMission ? 'checked' : ''} onchange="toggleMission(${player.id}, this.checked)"> 미션(5점)</label>
+                            <span style="font-size: 0.75rem; color: var(--text-muted);">갯수</span><input type="number" value="${player.stone === 0 ? '' : player.stone}" oninput="updateStone(${player.id}, this.value)">
+                            <label style="font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 3px; color: var(--text-muted);"><input type="checkbox" ${player.stoneMission ? 'checked' : ''} onchange="toggleMission(${player.id}, this.checked)"> 미션(5점)</label>
                             <span class="calc-result" id="stone-res-${player.id}">${player.stone * (player.stoneMission ? 5 : 1)}점</span>
                         </div>
                     </div>
@@ -207,11 +428,11 @@
         // 3. 인원 삭제 관리 섹션 렌더링
         html += `
             <div class="players-manage-card">
-                <div class="players-manage-header">👤 인원 삭제 관리</div>
+                <div class="players-manage-header">👤 건축가 공방 관리</div>
                 ${players.map(player => `
                     <div class="player-manage-row">
-                        <span style="font-weight: bold; font-size: 0.9rem;">${player.name}</span>
-                        ${players.length > 1 ? `<button class="delete-player" onclick="deletePlayer(${player.id})" style="background:none; color:#94a3b8; cursor:pointer;">✕ 삭제</button>` : '<span style="font-size:0.8rem; color:#94a3b8;">삭제 불가 (최소 1명)</span>'}
+                        <span style="font-weight: bold; font-size: 0.85rem; color: #fff;">${player.name}</span>
+                        ${players.length > 1 ? `<button class="delete-player" onclick="deletePlayer(${player.id})" style="background:none; border:none; color:#ff7b72; cursor:pointer; font-size: 0.8rem; font-weight: 700;">✕ 추방</button>` : '<span style="font-size:0.75rem; color:var(--text-muted);">최소 1명 유지</span>'}
                     </div>
                 `).join('')}
             </div>
@@ -253,7 +474,7 @@
         players.push({id:Date.now(), name:`건축가 ${players.length + 1}`, values:{blue:{val:0,star:0},yellow:{val:0,star:0},red:{val:0,star:0},purple:{val:0,star:0},green:{val:0,star:0}}, stone:0, stoneMission:false}); 
         renderApp(); 
     };
-    document.getElementById('reset-btn').onclick = () => { if(confirm('초기화하시겠습니까?')) location.reload(); };
+    document.getElementById('reset-btn').onclick = () => { if(confirm('모든 건축 설계도를 초기화하시겠습니까?')) location.reload(); };
 
     renderApp();
 </script>
