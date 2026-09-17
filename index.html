@@ -7,29 +7,17 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         :root {
-            --bg-color: #f7f4eb;          
-            --card-bg: #ffffff;          
-            --card-border: #e2d9c5;      
-            --accent-color: #bfa15f;     
-            --accent-glow: rgba(191, 161, 95, 0.15);
-            --text-main: #2c2926;        
-            --text-sub: #7a7367;         
-            --button-bg: #efe9db;        
-            --input-bg: #faf8f2;         
-            --danger-bg: #fae1e1;
-            --danger-border: #f09999;
-            
-            /* 단계별 고유 색상 설정 */
-            --color-blue: #3a76d1;
-            --color-yellow: #d9a42b;
-            --color-red: #d94b38;
-            --color-purple: #834bd9;
-            --color-green: #38a353;
-            --color-gray: #6e7880;
-
-            /* 현재 활성화된 테마 컬러 (기본값) */
-            --current-theme: #2c2926;
-            --current-glow: rgba(44, 41, 38, 0.12);
+            --bg-color: #12161a;          
+            --card-bg: #1c242c;          
+            --card-border: #2c3846;      
+            --accent-color: #e6b347;     
+            --accent-glow: rgba(230, 179, 71, 0.15);
+            --text-main: #f4f6f8;        
+            --text-sub: #8a9ba8;         
+            --button-bg: #24303c;        
+            --input-bg: #161c22;         
+            --danger-bg: #3a1a1a;
+            --danger-border: #753333;
         }
 
         * { 
@@ -66,120 +54,116 @@
             align-items: center; 
             margin-bottom: 16px; 
             padding-bottom: 12px; 
-            border-bottom: 2px solid var(--card-border); 
+            border-bottom: 1px solid var(--card-border); 
         }
         .header-title-area { display: flex; flex-direction: column; gap: 2px; }
-        .header-title { color: var(--text-main); font-size: 18px; font-weight: 800; letter-spacing: -0.5px; }
-        .header-subtitle { color: var(--accent-color); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+        .header-title { color: var(--text-main); font-size: 17px; font-weight: 800; letter-spacing: -0.5px; }
+        .header-subtitle { color: var(--accent-color); font-size: 10px; font-weight: 600; opacity: 0.9; text-transform: uppercase; letter-spacing: 0.5px; }
         .header-buttons { display: flex; gap: 8px; }
-        .btn-top-header { background-color: var(--button-bg); color: var(--text-main); border: 1px solid var(--card-border); padding: 8px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
-        .btn-top-header:active { transform: scale(0.95); }
-        .btn-top-danger { background-color: var(--danger-bg); color: #c92a2a; border-color: var(--danger-border); }
+        .btn-top-header { background-color: var(--button-bg); color: var(--accent-color); border: 1px solid var(--card-border); padding: 8px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+        .btn-top-header:active { transform: scale(0.95); background-color: #324252; }
+        .btn-top-danger { background-color: var(--danger-bg); color: #ffadad; border-color: var(--danger-border); }
         
         .progress-section { margin-bottom: 16px; }
         .progress-info-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .step-badge { background: var(--button-bg); border: 1px solid var(--card-border); color: var(--text-main); padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; }
+        .step-badge { background: var(--button-bg); border: 1px solid var(--card-border); color: var(--accent-color); padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; }
         .progress-bar-container { width: 100%; background-color: var(--input-bg); height: 6px; border-radius: 3px; border: 1px solid var(--card-border); overflow: hidden; }
-        .progress-bar-fill { height: 100%; width: 0%; transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); background-color: var(--current-theme); }
+        .progress-bar-fill { height: 100%; background: linear-gradient(90deg, #c29333, var(--accent-color)); width: 0%; transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
 
-        .section-box { background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; padding: 16px; margin-bottom: 14px; box-shadow: 0 4px 16px rgba(0,0,0,0.05); }
+        .section-box { background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; padding: 16px; margin-bottom: 14px; box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
         .section-title-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-        .section-title { font-size: 16px; font-weight: 800; color: var(--text-main); letter-spacing: -0.3px; display: flex; align-items: center; gap: 6px; }
+        .section-title { font-size: 15px; font-weight: 800; color: var(--accent-color); letter-spacing: -0.3px; }
         .section-desc { font-size: 12px; color: var(--text-sub); margin-bottom: 14px; line-height: 1.4; white-space: pre-line; }
 
         .expansion-card { display: flex; align-items: center; justify-content: space-between; background: var(--input-bg); padding: 12px 14px; border-radius: 10px; border: 1px solid var(--card-border); margin-bottom: 8px; cursor: pointer; transition: all 0.15s; }
-        .expansion-card.checked { border-color: var(--accent-color); background: #fdfcf7; box-shadow: 0 0 10px var(--accent-glow); }
+        .expansion-card.checked { border-color: var(--accent-color); background: #262c24; box-shadow: 0 0 10px var(--accent-glow); }
         .expansion-info { display: flex; flex-direction: column; gap: 2px; }
         .expansion-name { font-size: 13px; font-weight: 700; color: var(--text-main); }
         .expansion-sub { font-size: 10px; color: var(--text-sub); }
         .custom-checkbox { width: 22px; height: 22px; border-radius: 6px; border: 1px solid var(--card-border); background: var(--button-bg); display: flex; align-items: center; justify-content: center; color: var(--accent-color); font-size: 13px; font-weight: bold; flex-shrink: 0; }
-        .expansion-card.checked .custom-checkbox { background: var(--accent-color); color: #fff; border-color: var(--accent-color); }
+        .expansion-card.checked .custom-checkbox { background: var(--accent-color); color: #12161a; border-color: var(--accent-color); }
 
         .player-count-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
         .pc-btn { background-color: var(--button-bg); border: 1px solid var(--card-border); color: var(--text-main); padding: 12px 0; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; text-align: center; transition: all 0.15s; }
-        .pc-btn.active { background-color: #2c2926; border-color: #2c2926; color: #fff; box-shadow: 0 0 8px rgba(0,0,0,0.1); }
+        .pc-btn.active { background-color: #3b3018; border-color: var(--accent-color); color: var(--accent-color); box-shadow: 0 0 8px var(--accent-glow); }
         .pc-btn:active { transform: scale(0.96); }
         
         .config-row { display: flex; align-items: center; background-color: var(--input-bg); border: 1px solid var(--card-border); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; gap: 10px; }
-        .config-input-wrapper { display: flex; align-items: center; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 8px; padding: 6px 10px; flex: 1; }
+        .config-input-wrapper { display: flex; align-items: center; background: var(--button-bg); border: 1px solid var(--card-border); border-radius: 8px; padding: 6px 10px; flex: 1; }
         .config-input { flex: 1; background: transparent; border: none; color: var(--text-main); font-size: 16px; font-weight: 600; outline: none; width: 100%; }
 
-        .btn-primary { width: 100%; background: var(--current-theme); border: 1px solid var(--current-theme); color: #fff; padding: 14px; border-radius: 12px; font-size: 15px; font-weight: 800; cursor: pointer; text-align: center; margin-top: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); transition: all 0.15s; }
+        .btn-primary { width: 100%; background: linear-gradient(135deg, #c29333, var(--accent-color)); border: 1px solid #ffd985; color: #161c22; padding: 14px; border-radius: 12px; font-size: 15px; font-weight: 800; cursor: pointer; text-align: center; margin-top: 10px; box-shadow: 0 4px 12px rgba(230, 179, 71, 0.2); transition: all 0.15s; }
         .btn-primary:active { transform: scale(0.98); opacity: 0.9; }
-        .btn-edit-mode { background: var(--button-bg); color: var(--text-main); border: 1px solid var(--card-border); }
+        .btn-edit-mode { background: linear-gradient(135deg, #202c38, #2e3f52); border-color: #425870; color: #73b3e7; }
 
-        .btn-mini-calc { background-color: var(--button-bg); border: 1px solid var(--card-border); color: var(--text-main); padding: 6px 10px; border-radius: 8px; font-size: 11px; cursor: pointer; font-weight: 700; transition: all 0.15s; }
-        .btn-mini-calc:active { transform: scale(0.95); }
+        .btn-mini-calc { background-color: var(--button-bg); border: 1px solid var(--card-border); color: var(--accent-color); padding: 6px 10px; border-radius: 8px; font-size: 11px; cursor: pointer; font-weight: 700; transition: all 0.15s; }
+        .btn-mini-calc:active { background-color: #324252; transform: scale(0.95); }
 
-        .mini-calc-panel { background-color: var(--input-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 12px; margin-top: 10px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 8px; box-shadow: inset 0 2px 8px rgba(0,0,0,0.05); }
-        .mini-calc-screen { width: 100%; background: #fff; border: 1px solid var(--card-border); border-radius: 8px; color: var(--text-main); font-size: 18px; font-weight: bold; text-align: right; padding: 10px 12px; outline: none; }
+        .mini-calc-panel { background-color: var(--input-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 12px; margin-top: 10px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 8px; box-shadow: inset 0 2px 8px rgba(0,0,0,0.4); }
+        .mini-calc-screen { width: 100%; background: #0a0e12; border: 1px solid var(--card-border); border-radius: 8px; color: var(--accent-color); font-size: 18px; font-weight: bold; text-align: right; padding: 10px 12px; outline: none; }
         .mini-calc-keypad { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
-        .mc-btn { background-color: var(--card-bg); border: 1px solid var(--card-border); color: var(--text-main); padding: 12px 0; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; text-align: center; }
-        .mc-btn:active { background-color: #eee; transform: scale(0.95); }
-        .mc-btn-op { color: var(--current-theme); background-color: var(--button-bg); }
-        .mc-btn-equal { background-color: var(--current-theme); border-color: var(--current-theme); color: #fff; }
-        .mc-assign-box { background-color: #fff; border: 1px solid var(--current-theme); border-radius: 8px; padding: 10px; margin-top: 6px; display: flex; flex-direction: column; gap: 6px; }
-        .mc-assign-title { font-size: 12px; color: var(--current-theme); font-weight: bold; text-align: center; }
+        .mc-btn { background-color: var(--button-bg); border: 1px solid var(--card-border); color: var(--text-main); padding: 12px 0; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; text-align: center; }
+        .mc-btn:active { background-color: #35495e; transform: scale(0.95); }
+        .mc-btn-op { color: var(--accent-color); background-color: #263544; }
+        .mc-btn-equal { background-color: #4a3c18; border-color: var(--accent-color); color: var(--accent-color); }
+        .mc-assign-box { background-color: #19222c; border: 1px solid var(--accent-color); border-radius: 8px; padding: 10px; margin-top: 6px; display: flex; flex-direction: column; gap: 6px; }
+        .mc-assign-title { font-size: 12px; color: var(--accent-color); font-weight: bold; text-align: center; }
         .mc-assign-buttons { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
         .mc-target-btn { background-color: var(--button-bg); border: 1px solid var(--card-border); color: var(--text-main); padding: 8px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; }
         .mc-target-btn:active { transform: scale(0.95); }
 
-        .player-score-card { background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.03); transition: border-color 0.15s; }
-        .player-score-card:focus-within { border-color: var(--current-theme); box-shadow: 0 0 8px var(--current-glow); }
+        .player-score-card { background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 6px rgba(0,0,0,0.15); transition: border-color 0.15s; }
+        .player-score-card:focus-within { border-color: var(--accent-color); }
         
-        .player-info-area { display: flex; align-items: center; justify-content: space-between; width: 100%; }
+        .player-info-area { display: flex; align-items: center; gap: 8px; }
         .player-card-name { font-size: 14px; font-weight: 700; color: var(--text-main); }
 
         .stepper-controls { display: flex; align-items: center; gap: 6px; }
-        .step-btn { background-color: var(--button-bg); border: 1px solid var(--card-border); color: var(--text-main); width: 34px; height: 34px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.1s; flex-shrink: 0; }
-        .step-btn:active { transform: scale(0.92); }
+        .step-btn { background-color: var(--button-bg); border: 1px solid var(--card-border); color: var(--text-main); width: 38px; height: 38px; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.1s; flex-shrink: 0; }
+        .step-btn:active { background-color: #35495e; transform: scale(0.92); }
         
-        .score-input { background-color: var(--input-bg); border: 1px solid var(--card-border); color: var(--text-main); width: 56px; height: 34px; text-align: center; font-size: 15px; font-weight: 800; border-radius: 8px; outline: none; transition: border-color 0.15s; }
-        .score-input:focus { border-color: var(--current-theme); }
-
-        .vertical-inputs-container { display: flex; flex-direction: column; gap: 6px; background: var(--input-bg); padding: 8px 10px; border-radius: 8px; border: 1px solid var(--card-border); }
-        .input-row-group { display: flex; align-items: center; justify-content: space-between; }
-        .input-label-text { font-size: 11px; font-weight: 700; color: var(--text-sub); }
+        .score-input { background-color: var(--input-bg); border: 1px solid var(--card-border); color: var(--text-main); width: 64px; height: 38px; text-align: center; font-size: 16px; font-weight: 800; border-radius: 8px; outline: none; transition: border-color 0.15s; }
+        .score-input:focus { border-color: var(--accent-color); }
 
         .nav-button-group { display: flex; gap: 8px; margin-top: 16px; margin-bottom: 16px; }
         .btn-secondary { flex: 1; background-color: var(--button-bg); border: 1px solid var(--card-border); color: var(--text-main); padding: 14px; border-radius: 12px; font-size: 14px; font-weight: 700; cursor: pointer; text-align: center; transition: all 0.15s; }
-        .btn-secondary:active { transform: scale(0.98); }
+        .btn-secondary:active { background-color: #324252; transform: scale(0.98); }
         
-        .live-score-bar { background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: 10px; padding: 10px 14px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-around; font-size: 11px; color: var(--text-sub); margin-bottom: 14px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); }
+        .live-score-bar { background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: 10px; padding: 10px 14px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-around; font-size: 11px; color: var(--text-sub); margin-bottom: 14px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); }
         .live-score-item { display: flex; align-items: center; gap: 4px; }
         .live-score-item span { color: var(--text-main); font-weight: 800; font-size: 12px; }
         
         .winner-card { 
-            background: linear-gradient(135deg, #2c2926, #4a4540); 
+            background: linear-gradient(135deg, #1c2833, #3a2c14, #121922); 
             border: 2px solid var(--accent-color); 
             border-radius: 16px; 
             padding: 24px 16px; 
             text-align: center; 
             margin-bottom: 16px; 
-            box-shadow: 0 6px 24px rgba(0,0,0,0.15);
+            box-shadow: 0 6px 24px rgba(230, 179, 71, 0.2);
             position: relative;
             overflow: hidden;
-            color: #fff;
         }
         .winner-explorer-icon-container {
             position: relative;
             width: 68px;
             height: 68px;
             margin: 0 auto 10px auto;
-            background: rgba(191, 161, 95, 0.2);
+            background: rgba(230, 179, 71, 0.1);
             border: 2px solid var(--accent-color);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
+            box-shadow: 0 0 12px var(--accent-glow);
         }
         .winner-explorer-svg { width: 36px; height: 36px; fill: var(--accent-color); }
         .winner-name-badge { font-size: 22px; font-weight: 800; color: #fff; margin: 6px 0 2px 0; display: inline-flex; align-items: center; gap: 6px; }
         .winner-score-badge { font-size: 28px; font-weight: 900; color: var(--accent-color); text-shadow: 0 2px 6px rgba(0,0,0,0.5); }
 
-        .ranking-card { background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: 10px; padding: 14px; margin-bottom: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.03); }
-        .mvp-section-title { font-size: 13px; font-weight: 800; color: var(--text-main); margin: 16px 0 8px 4px; letter-spacing: -0.2px; }
-        .mvp-card { background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 6px rgba(0,0,0,0.03); }
+        .ranking-card { background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: 10px; padding: 14px; margin-bottom: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+        .mvp-section-title { font-size: 13px; font-weight: 800; color: var(--accent-color); margin: 16px 0 8px 4px; letter-spacing: -0.2px; }
+        .mvp-card { background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
         
         .creator-footer { text-align: center; font-size: 11px; color: var(--text-sub); margin-top: 20px; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 6px; }
         .hidden { display: none !important; }
@@ -190,8 +174,8 @@
 <div class="container">
     <header>
         <div class="header-title-area">
-            <span class="header-title">🏛️ 폴리스의 건축가들</span>
-            <span class="header-subtitle">Architects of the Polis</span>
+            <span class="header-title">폴리스의 건축가들</span>
+            <span class="header-subtitle" id="header-sub-author">Score Calculator</span>
         </div>
         <div class="header-buttons">
             <button class="btn-top-header btn-top-danger" onclick="fullResetApp()">초기화</button>
@@ -201,31 +185,60 @@
     <!-- 1단계: 설정 화면 -->
     <div id="setup-screen">
         <div class="section-box">
-            <div class="section-title">✨ 확장 선택</div>
-            <div class="section-desc">적용할 확장을 선택하십시오.</div>
+            <div class="section-title">아크로폴리스 준비</div>
+            <div class="section-desc">변형 규칙 옵션(선택 사항) 및 참여 인원수를 선택하십시오[span_7](start_span)[span_7](end_span).</div>
             
-            <div class="expansion-card" id="card-exp-athena" onclick="toggleExpansion('athena')">
+            <div style="font-size: 12px; font-weight: 700; color: var(--accent-color); margin-bottom: 6px;">변형 규칙 (2배 점수 조건)[span_8](start_span)[span_8](end_span)</div>
+            <div class="expansion-card" id="card-var-residential" onclick="toggleVariant('residential')">
                 <div class="expansion-info">
-                    <div class="expansion-name">확장: 아테나</div>
-                    <div class="expansion-sub">채석장 타일 점수 계산 방식 변경 (개당 1점 ➔ 개당 5점)</div>
+                    <div class="expansion-name">주거지 변형 규칙</div>
+                    <div class="expansion-sub">총 가치 10 이상 시 점수 2배[span_9](start_span)[span_9](end_span)</div>
                 </div>
-                <div class="custom-checkbox" id="chk-athena"></div>
+                <div class="custom-checkbox" id="chk-residential"></div>
+            </div>
+            <div class="expansion-card" id="card-var-market" onclick="toggleVariant('market')">
+                <div class="expansion-info">
+                    <div class="expansion-name">시장 변형 규칙</div>
+                    <div class="expansion-sub">시장 광장 인접 시 점수 2배[span_10](start_span)[span_10](end_span)</div>
+                </div>
+                <div class="custom-checkbox" id="chk-market"></div>
+            </div>
+            <div class="expansion-card" id="card-var-barracks" onclick="toggleVariant('barracks')">
+                <div class="expansion-info">
+                    <div class="expansion-name">병영 변형 규칙</div>
+                    <div class="expansion-sub">빈칸 3~4개 인접 시 점수 2배[span_11](start_span)[span_11](end_span)</div>
+                </div>
+                <div class="custom-checkbox" id="chk-barracks"></div>
+            </div>
+            <div class="expansion-card" id="card-var-temple" onclick="toggleVariant('temple')">
+                <div class="expansion-info">
+                    <div class="expansion-name">신전 변형 규칙</div>
+                    <div class="expansion-sub">높은 층(2층 이상) 위치 시 점수 2배[span_12](start_span)[span_12](end_span)</div>
+                </div>
+                <div class="custom-checkbox" id="chk-temple"></div>
+            </div>
+            <div class="expansion-card" id="card-var-garden" onclick="toggleVariant('garden')">
+                <div class="expansion-info">
+                    <div class="expansion-name">정원 변형 규칙</div>
+                    <div class="expansion-sub">호수 인접 시 점수 2배[span_13](start_span)[span_13](end_span)</div>
+                </div>
+                <div class="custom-checkbox" id="chk-garden"></div>
             </div>
 
-            <div style="font-size: 12px; font-weight: 700; color: var(--text-main); margin-top: 14px; margin-bottom: 6px;">참여 인원 (최대 4명)</div>
+            <div style="font-size: 12px; font-weight: 700; color: var(--accent-color); margin-top: 14px; margin-bottom: 6px;">참여 인원</div>
             <div class="player-count-grid" id="player-count-buttons"></div>
         </div>
 
         <div class="section-box">
-            <div class="section-title">🏛️ 건축가 설정</div>
-            <div class="section-desc">참여하는 건축가(플레이어)의 이름을 지정하세요.</div>
+            <div class="section-title">건축가 설정</div>
+            <div class="section-desc">플레이어(건축가)의 이름을 지정하세요[span_14](start_span)[span_14](end_span).</div>
             <div id="player-config-list"></div>
         </div>
 
-        <button class="btn-primary" onclick="startCalculator()">건축 점수 기록 시작</button>
+        <button class="btn-primary" onclick="startCalculator()">점수 계산 시작</button>
         
         <div class="creator-footer">
-            <span style="color:var(--accent-color);">✦</span>제작자 천상민
+            <span style="color:var(--accent-color);">✦</span> 제작자 천상민
         </div>
     </div>
 
@@ -288,41 +301,47 @@
     <!-- 3단계: 결과 화면 -->
     <div id="result-screen" class="hidden">
         <div class="winner-card">
-            <div style="font-size: 10px; color: var(--accent-color); margin-bottom: 4px; font-weight:800; letter-spacing: 1.5px;">🏛️ 아테네 최고의 수석 건축가 🏛️</div>
+            <div style="font-size: 10px; color: var(--accent-color); margin-bottom: 4px; font-weight:800; letter-spacing: 1.5px;">🏛️ 최고의 수석 건축가 🏛️</div>
             
             <div class="winner-explorer-icon-container">
                 <svg class="winner-explorer-svg" viewBox="0 0 512 512">
-                    <path d="M512 240c0 11.46-4.42 22.7-12.7 31.32L416 355.6V464c0 26.51-21.49 48-48 48h-64c-26.51 0-48-21.49-48-48v-80c0-8.84-7.16-16-16-16s-16 7.16-16 16v80c0 26.51-21.49 48-48 48H144c-26.51 0-48-21.49-48-48V355.6L12.7 271.32C4.42 262.7 0 251.46 0 240c0-19.12 12.35-35.61 30.32-41.48l208-67.6c10.82-3.52 22.54-3.52 33.36 0l208 67.6C499.65 204.39 512 220.88 512 240z"/>
+                    <path d="M256 32c125.5 0 228 102.5 228 228s-102.5 228-228 228S28 385.5 28 260 130.5 32 256 32zm0 64c-88.4 0-160 71.6-160 160 0 36.4 12.6 69.8 33.7 96.3l12.4-12.4c-16.7-22-26.1-49.4-26.1-83.9 0-66.3 53.7-120 120-120s120 53.7 120 120c0 34.5-9.4 61.9-26.1 83.9l12.4 12.4c21.1-26.5 33.7-59.9 33.7-96.3 0-88.4-71.6-160-160-160zm0 48c61.9 0 112 50.1 112 112 0 25.1-8.5 48.2-22.7 66.5L331 303.3c-20.9-19-34.6-45.9-36.8-76.3h-76.4c-2.2 30.4-15.9 57.3-36.8 76.3l-14.3-14.3C152.5 292.2 144 269.1 144 244c0-61.9 50.1-112 112-112zm0 64c-26.5 0-48 21.5-48 48s21.5 48 48 48 48-21.5 48-48-21.5-48-48-48z"/>
                 </svg>
             </div>
 
             <div class="winner-name-badge" id="winner-name-display">-</div>
             <div class="winner-score-badge" id="winner-score-display">0점</div>
-            <div style="font-size: 11px; color: #ddd; margin-top: 8px;" id="winner-flavor-text">-</div>
+            <div style="font-size: 11px; color: var(--text-sub); margin-top: 8px;" id="winner-flavor-text">-</div>
         </div>
         
-        <div class="mvp-section-title">🏆 부문별 명예로운 건축상 & 하이라이트</div>
+        <div class="mvp-section-title">🏆 부문별 건축 하이라이트</div>
         <div id="mvp-cards-container"></div>
 
-        <div class="mvp-section-title" style="margin-top: 20px;">📊 폴리스 최종 순위</div>
+        <div class="mvp-section-title" style="margin-top: 20px;">📊 최종 순위</div>
         <div id="ranking-list"></div>
         
         <button class="btn-primary btn-edit-mode" onclick="goToEditSteps()" style="margin-top:14px;">점수 항목 다시 수정하기</button>
-        <button class="btn-primary" onclick="resetApp()" style="margin-top: 8px; background-color: #2c2926; border-color: #2c2926;">새로운 설정으로 시작하기</button>
+        <button class="btn-primary" onclick="resetApp()" style="margin-top: 8px;">새로운 설정으로 시작하기</button>
     </div>
 </div>
 
 <script>
     let playerCount = 4;
-    let expansionAthena = false;
+    let variants = {
+        residential: false,
+        market: false,
+        barracks: false,
+        temple: false,
+        garden: false
+    };
     
     let baseSteps = [
-        { id: 'housing', title: "1. 주거지 (파랑)", desc: "가장 큰 그룹안의 점수 계산 (별 개수 × 타일 개수)", awardName: "주거 구역 명예상", flavor: "시민들이 편안하게 머무를 최고의 주거 단지를 설계한 건축가!", type: "multiplierGroup", colorCode: "#3a76d1", glowCode: "rgba(58, 118, 209, 0.15)" },
-        { id: 'market', title: "2. 시장 (노랑)", desc: "따로 떨어진 점수 계산 (별 개수 × 타일 개수)", awardName: "황금 상단 번경상", flavor: "활기찬 상업 지구를 유치하여 폴리스의 경제를 부흥시킨 거상!", type: "multiplierGroup", colorCode: "#d9a42b", glowCode: "rgba(217, 164, 43, 0.15)" },
-        { id: 'barracks', title: "3. 병영 (빨강)", desc: "가장자리의 점수 계산 (별 개수 × 타일 개수)", awardName: "철옹성 수호대상", flavor: "폴리스의 경계를 굳건히 지킬 막강한 방위망을 구축한 장군!", type: "multiplierGroup", colorCode: "#d94b38", glowCode: "rgba(217, 75, 56, 0.15)" },
-        { id: 'temple', title: "4. 신전 (보라)", desc: "완전히 둘러싸인 점수 계산 (별 개수 × 타일 개수)", awardName: "신들의 가호상", flavor: "올림포스의 신들께 경배를 바칠 웅장한 신전을 완공한 성직자!", type: "multiplierGroup", colorCode: "#834bd9", glowCode: "rgba(131, 75, 217, 0.15)" },
-        { id: 'garden', title: "5. 정원 (초록)", desc: "모든 점수 계산 (별 개수 × 타일 개수)", awardName: "아테네의 정원상", flavor: "삭막한 도시 속에 찬란한 생명의 녹음을 불어넣은 조경가!", type: "multiplierGroup", colorCode: "#38a353", glowCode: "rgba(56, 163, 83, 0.15)" },
-        { id: 'quarry', title: "6. 채석장 (회색)", desc: "채석장 타일 점수 계산 (확장 아테네 미선택: 개당 1점 / 선택 시: 개당 5점)", awardName: "석산 개발 개척상", flavor: "도시 건설의 초석이 될 단단한 대리석을 한가득 채굴한 기술자!", type: "quarryCalc", colorCode: "#6e7880", glowCode: "rgba(110, 120, 128, 0.15)" }
+        { id: 'residential', title: "1. 주거지 구역", desc: "가장 큰 주거지 그룹의 가치 × 주거지 광장 별 총합[span_15](start_span)[span_15](end_span)\n(변형 규칙 적용 시 조건 충족 시 2배)[span_16](start_span)[span_16](end_span)", awardName: "대단지 주거 설계상", flavor: "시민들이 조화롭게 어우러지는 가장 거대한 주거 구역을 완성한 건축가!" },
+        { id: 'market', title: "2. 시장 구역", desc: "독립된 시장 구역들의 가치 합산 × 시장 광장 별 총합[span_17](start_span)[span_17](end_span)\n(변형 규칙 적용 시 조건 충족 시 2배)[span_18](start_span)[span_18](end_span)", awardName: "황금 상권 개척상", flavor: "경쟁을 피해 완벽한 위치에 상권을 배치하여 번영을 이끈 상인들의 수호자!" },
+        { id: 'temple', title: "3. 신전 구역", desc: "완전히 둘러싸인 신전 구역 가치 합산 × 신전 광장 별 총합[span_19](start_span)[span_19](end_span)\n(변형 규칙 적용 시 조건 충족 시 2배)[span_20](start_span)[span_20](end_span)", awardName: "성스러운 신전상", flavor: "주변의 신도들을 완벽히 끌어모아 경외를 자아낸 신성한 성소의 설계자!" },
+        { id: 'barracks', title: "4. 병영 구역", desc: "도시 가장자리에 위치한 병영 가치 합산 × 병영 광장 별 총합[span_21](start_span)[span_21](end_span)\n(변형 규칙 적용 시 조건 충족 시 2배)[span_22](start_span)[span_22](end_span)", awardName: "철통 방어상", flavor: "폴리스의 국경을 난공불락으로 수호하는 용맹한 병영을 구축한 전략가!" },
+        { id: 'garden', title: "5. 정원 구역", desc: "모든 정원 구역 가치 합산 × 정원 광장 별 총합[span_23](start_span)[span_23](end_span)\n(변형 규칙 적용 시 조건 충족 시 2배)[span_24](start_span)[span_24](end_span)", awardName: "도심 속 오아시스상", flavor: "삭살한 도시를 아름답고 평화로운 휴식처로 탈바꿈시킨 조경의 마법사!" },
+        { id: 'stones', title: "6. 남은 석재", desc: "게임 종료 시 보유한 석재 큐브 1개당 1점 추가[span_25](start_span)[span_25](end_span)", awardName: "자원 비축왕상", flavor: "건설을 끝내고도 든든한 석재 자원을 곳곳에 남겨둔 자산가!" }
     ];
 
     let steps = [];
@@ -333,27 +352,26 @@
     window.onload = function() {
         renderPlayerCountButtons();
         renderPlayerConfigInputs();
-        updateExpansionUI();
+        updateVariantUI();
     };
 
-    function toggleExpansion(type) {
-        if (type === 'athena') {
-            expansionAthena = !expansionAthena;
-        }
-        updateExpansionUI();
+    function toggleVariant(type) {
+        variants[type] = !variants[type];
+        updateVariantUI();
     }
 
-    function updateExpansionUI() {
-        const athenaCard = document.getElementById('card-exp-athena');
-        const athenaChk = document.getElementById('chk-athena');
-
-        if (expansionAthena) {
-            athenaCard.classList.add('checked');
-            athenaChk.innerText = '✓';
-        } else {
-            athenaCard.classList.remove('checked');
-            athenaChk.innerText = '';
-        }
+    function updateVariantUI() {
+        Object.keys(variants).forEach(type => {
+            const card = document.getElementById(`card-var-${type}`);
+            const chk = document.getElementById(`chk-${type}`);
+            if (variants[type]) {
+                card.classList.add('checked');
+                chk.innerText = '✓';
+            } else {
+                card.classList.remove('checked');
+                chk.innerText = '';
+            }
+        });
     }
 
     function toggleMiniCalc() {
@@ -493,9 +511,7 @@
                 name: playerNames[i],
                 scores: new Array(steps.length).fill(0),
                 rawData: {
-                    star: new Array(steps.length).fill(0),
-                    tile: new Array(steps.length).fill(0),
-                    quarryCount: 0
+                    stones: 0
                 }
             });
         }
@@ -506,21 +522,12 @@
     }
 
     function renderStep() {
-        const stepInfo = steps[currentStep];
-        
-        // CSS 루트 변수 실시간 변경 (단계별 색상 반영)
-        document.documentElement.style.setProperty('--current-theme', stepInfo.colorCode);
-        document.documentElement.style.setProperty('--current-glow', stepInfo.glowCode);
-
         const progressPercent = ((currentStep + 1) / steps.length) * 100;
         document.getElementById('progress-bar-fill').style.width = `${progressPercent}%`;
 
         document.getElementById('step-counter').innerText = `STEP ${currentStep + 1} / ${steps.length}`;
-        
-        const titleEl = document.getElementById('step-title');
-        titleEl.innerHTML = `<span style="display:inline-block; width:12px; height:12px; border-radius:50%; background:${stepInfo.colorCode}; margin-right:4px;"></span> ${stepInfo.title}`;
-        
-        document.getElementById('step-desc').innerText = stepInfo.desc;
+        document.getElementById('step-title').innerText = steps[currentStep].title;
+        document.getElementById('step-desc').innerText = steps[currentStep].desc;
         document.getElementById('next-btn').innerText = (currentStep === steps.length - 1) ? "최종 결과 보기" : "다음 단계";
 
         document.getElementById('mini-calc-panel').classList.add('hidden');
@@ -545,144 +552,50 @@
     function renderScoreInputs() {
         const container = document.getElementById('player-score-inputs');
         container.innerHTML = '';
-        const step = steps[currentStep];
 
         players.forEach((p, index) => {
             const card = document.createElement('div');
             card.className = 'player-score-card';
 
-            let innerHtml = '';
-
-            if (step.type === 'multiplierGroup') {
-                const starVal = p.rawData.star[currentStep] || 0;
-                const tileVal = p.rawData.tile[currentStep] || 0;
-                innerHtml = `
-                    <div class="player-info-area">
-                        <div class="player-card-name">${p.name}</div>
-                        <span style="font-size:13px; color:${step.colorCode}; font-weight:800;" id="group-total-${index}">총 ${p.scores[currentStep]}점</span>
-                    </div>
-                    <div class="vertical-inputs-container">
-                        <div class="input-row-group">
-                            <span class="input-label-text">⭐ 별 개수</span>
-                            <div class="stepper-controls">
-                                <button class="step-btn" onclick="adjustGroupValue(${index}, 'star', -1)">-</button>
-                                <input type="number" class="score-input" id="star-input-${index}" value="${starVal}" onfocus="this.select()" onchange="updateGroupValue(${index})">
-                                <button class="step-btn" onclick="adjustGroupValue(${index}, 'star', 1)">+</button>
-                            </div>
-                        </div>
-                        <div class="input-row-group">
-                            <span class="input-label-text">🧱 타일 개수</span>
-                            <div class="stepper-controls">
-                                <button class="step-btn" onclick="adjustGroupValue(${index}, 'tile', -1)">-</button>
-                                <input type="number" class="score-input" id="tile-input-${index}" value="${tileVal}" onfocus="this.select()" onchange="updateGroupValue(${index})">
-                                <button class="step-btn" onclick="adjustGroupValue(${index}, 'tile', 1)">+</button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            } else if (step.type === 'quarryCalc') {
-                const count = p.rawData.quarryCount;
-                innerHtml = `
-                    <div class="player-info-area">
-                        <div class="player-card-name">${p.name}</div>
-                        <span style="font-size:13px; color:${step.colorCode}; font-weight:800;" id="quarry-score-${index}">총 ${p.scores[currentStep]}점</span>
-                    </div>
-                    <div class="vertical-inputs-container">
-                        <div class="input-row-group">
-                            <span class="input-label-text">⛏️ 채석장 타일 수 (${expansionAthena ? '개당 5점' : '개당 1점'})</span>
-                            <div class="stepper-controls">
-                                <button class="step-btn" onclick="adjustQuarry(${index}, -1)">-</button>
-                                <input type="number" class="score-input" id="quarry-input-${index}" value="${count}" onfocus="this.select()" onchange="updateQuarry(${index}, this.value)">
-                                <button class="step-btn" onclick="adjustQuarry(${index}, 1)">+</button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
+            let innerHtml = `
+                <div class="player-info-area">
+                    <div class="player-card-name">${p.name}</div>
+                </div>
+                <div class="stepper-controls">
+                    <button class="step-btn" onclick="adjustScore(${index}, -1)">-</button>
+                    <input type="number" class="score-input" id="score-input-${index}" value="${p.scores[currentStep]}" onfocus="this.select()" onchange="updateScoreValue(${index}, this.value)">
+                    <button class="step-btn" onclick="adjustScore(${index}, 1)">+</button>
+                </div>
+            `;
 
             card.innerHTML = innerHtml;
             container.appendChild(card);
         });
     }
 
-    function adjustGroupValue(pIdx, field, amt) {
-        let starInput = document.getElementById(`star-input-${pIdx}`);
-        let tileInput = document.getElementById(`tile-input-${pIdx}`);
-        
-        let starVal = parseInt(starInput.value) || 0;
-        let tileVal = parseInt(tileInput.value) || 0;
-
-        if (field === 'star') {
-            starVal = Math.max(0, starVal + amt);
-            starInput.value = starVal;
-        } else {
-            tileVal = Math.max(0, tileVal + amt);
-            tileInput.value = tileVal;
-        }
-
-        players[pIdx].rawData.star[currentStep] = starVal;
-        players[pIdx].rawData.tile[currentStep] = tileVal;
-        
-        let calculatedScore = starVal * tileVal;
-        players[pIdx].scores[currentStep] = calculatedScore;
-        document.getElementById(`group-total-${pIdx}`).innerText = `총 ${calculatedScore}점`;
+    function adjustScore(pIdx, amt) {
+        players[pIdx].scores[currentStep] = Math.max(0, players[pIdx].scores[currentStep] + amt);
+        document.getElementById(`score-input-${pIdx}`).value = players[pIdx].scores[currentStep];
         renderLiveScoreBar();
     }
 
-    function updateGroupValue(pIdx) {
-        let starInput = document.getElementById(`star-input-${pIdx}`);
-        let tileInput = document.getElementById(`tile-input-${pIdx}`);
-        
-        let starVal = Math.max(0, parseInt(starInput.value) || 0);
-        let tileVal = Math.max(0, parseInt(tileInput.value) || 0);
-
-        starInput.value = starVal;
-        tileInput.value = tileVal;
-
-        players[pIdx].rawData.star[currentStep] = starVal;
-        players[pIdx].rawData.tile[currentStep] = tileVal;
-        
-        let calculatedScore = starVal * tileVal;
-        players[pIdx].scores[currentStep] = calculatedScore;
-        document.getElementById(`group-total-${pIdx}`).innerText = `총 ${calculatedScore}점`;
-        renderLiveScoreBar();
-    }
-
-    function adjustQuarry(pIdx, amt) {
-        players[pIdx].rawData.quarryCount = Math.max(0, players[pIdx].rawData.quarryCount + amt);
-        let multiplier = expansionAthena ? 5 : 1;
-        players[pIdx].scores[currentStep] = players[pIdx].rawData.quarryCount * multiplier;
-        document.getElementById(`quarry-input-${pIdx}`).value = players[pIdx].rawData.quarryCount;
-        document.getElementById(`quarry-score-${pIdx}`).innerText = `총 ${players[pIdx].scores[currentStep]}점`;
-        renderLiveScoreBar();
-    }
-
-    function updateQuarry(pIdx, val) {
+    function updateScoreValue(pIdx, val) {
         const num = parseInt(val);
-        const safeNum = isNaN(num) ? 0 : Math.max(0, num);
-        players[pIdx].rawData.quarryCount = safeNum;
-        let multiplier = expansionAthena ? 5 : 1;
-        players[pIdx].scores[currentStep] = safeNum * multiplier;
-        document.getElementById(`quarry-score-${pIdx}`).innerText = `총 ${players[pIdx].scores[currentStep]}점`;
+        players[pIdx].scores[currentStep] = isNaN(num) ? 0 : Math.max(0, num);
         renderLiveScoreBar();
     }
 
     function saveCurrentScores() {
-        const step = steps[currentStep];
-        if (!step) return;
-        if (step.type === 'multiplierGroup') {
-            players.forEach((_, idx) => updateGroupValue(idx));
-        } else if (step.type === 'quarryCalc') {
-            players.forEach((p, idx) => {
-                const input = document.getElementById(`quarry-input-${idx}`);
-                if (input) {
-                    let val = parseInt(input.value) || 0;
-                    p.rawData.quarryCount = val;
-                    let multiplier = expansionAthena ? 5 : 1;
-                    p.scores[currentStep] = val * multiplier;
+        players.forEach((p, idx) => {
+            const input = document.getElementById(`score-input-${idx}`);
+            if (input) {
+                let val = parseInt(input.value) || 0;
+                p.scores[currentStep] = Math.max(0, val);
+                if (steps[currentStep].id === 'stones') {
+                    p.rawData.stones = val;
                 }
-            });
-        }
+            }
+        });
     }
 
     function prevStep() {
@@ -711,16 +624,21 @@
 
         let ranked = players.map(p => {
             let total = p.scores.reduce((a, b) => a + b, 0);
-            return { ...p, total };
+            let stones = p.rawData.stones;
+            return { ...p, total, stones };
         });
 
-        ranked.sort((a, b) => b.total - a.total);
+        // 동점 시 남은 석재가 더 많은 건축가 우선[span_26](start_span)[span_26](end_span)
+        ranked.sort((a, b) => {
+            if (b.total !== a.total) return b.total - a.total;
+            return b.stones - a.stones;
+        });
         
         const winnerNameEl = document.getElementById('winner-name-display');
         winnerNameEl.innerHTML = `<span>${ranked[0].name}</span>`;
         
         document.getElementById('winner-score-display').innerText = `${ranked[0].total}점`;
-        document.getElementById('winner-flavor-text').innerText = "“아테네 시민들의 찬사를 받으며 폴리스 역사에 영원히 남을 걸작을 완성했습니다!”";
+        document.getElementById('winner-flavor-text').innerText = "“가장 눈부신 아크로폴리스를 건설하여 폴리스 역사에 영원히 이름을 남겼습니다!”";
 
         const mvpContainer = document.getElementById('mvp-cards-container');
         mvpContainer.innerHTML = '';
@@ -744,8 +662,8 @@
                 mvpCard.className = 'mvp-card';
                 mvpCard.innerHTML = `
                     <div>
-                        <div style="font-size:10px; color:${step.colorCode}; font-weight:800; margin-bottom:2px;">[${step.awardName}]</div>
-                        <div style="font-size:12px; font-weight:700; color:var(--text-main);">${step.title} 1위: <span style="color:${step.colorCode}; font-weight:800;">${topPlayerName}</span> (${topScore}점)</div>
+                        <div style="font-size:10px; color:var(--accent-color); font-weight:800; margin-bottom:2px;">[${step.awardName}]</div>
+                        <div style="font-size:12px; font-weight:700; color:var(--text-main);">${step.title} 1위: <span style="color:var(--accent-color); font-weight:800;">${topPlayerName}</span> (${topScore}점)</div>
                         <div style="font-size:10px; color:var(--text-sub); margin-top:2px;">${step.flavor}</div>
                     </div>
                 `;
@@ -757,7 +675,6 @@
         list.innerHTML = '';
         ranked.forEach((p, idx) => {
             const card = document.createElement('div');
-            card.className, 'ranking-card';
             card.className = 'ranking-card';
             card.innerHTML = `
                 <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -765,7 +682,7 @@
                         <span style="color:var(--accent-color); font-weight:800; font-size:14px;">${idx + 1}위</span>
                         <span style="font-weight:700; font-size:13px;">${p.name}</span>
                     </div>
-                    <span style="color:var(--accent-color); font-weight:800; font-size:14px;">${p.total}점</span>
+                    <span style="color:var(--accent-color); font-weight:800; font-size:14px;">${p.total}점 (석재 ${p.stones}개)</span>
                 </div>
             `;
             list.appendChild(card);
@@ -779,13 +696,13 @@
         currentStep = 0;
         renderPlayerCountButtons();
         renderPlayerConfigInputs();
-        updateExpansionUI();
+        updateVariantUI();
     }
 
     function fullResetApp() {
         if (confirm("모든 설정과 건축가 기록이 초기화됩니다. 진행하시겠습니까?")) {
             playerCount = 4;
-            expansionAthena = false;
+            variants = { residential: false, market: false, barracks: false, temple: false, garden: false };
             playerNames = ["건축가 1", "건축가 2", "건축가 3", "건축가 4"];
             players = [];
             currentStep = 0;
