@@ -1,715 +1,1835 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>폴리스의 건축가들 - 점수 계산기</title>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <style>
-        :root {
-            --bg-color: #12161a;          
-            --card-bg: #1c242c;          
-            --card-border: #2c3846;      
-            --accent-color: #e6b347;     
-            --accent-glow: rgba(230, 179, 71, 0.15);
-            --text-main: #f4f6f8;        
-            --text-sub: #8a9ba8;         
-            --button-bg: #24303c;        
-            --input-bg: #161c22;         
-            --danger-bg: #3a1a1a;
-            --danger-border: #753333;
-        }
+import React, { useState, useEffect, useMemo } from 'react';
+import {
+  Users,
+  Sparkles,
+  Star,
+  Hexagon,
+  ChevronRight,
+  ChevronLeft,
+  Trophy,
+  Copy,
+  Check,
+  RotateCcw,
+  Lock,
+  Unlock,
+  Flame,
+  Crown,
+  ScrollText,
+  Shield,
+  Home,
+  Store,
+  Landmark,
+  Trees,
+  Box,
+  Award,
+  X
+} from 'lucide-react';
 
-        * { 
-            box-sizing: border-box; 
-            margin: 0; 
-            padding: 0; 
-            font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; 
-            -webkit-tap-highlight-color: transparent; 
-            -webkit-touch-callout: none;
-        }
+// 챕터 정의 데이터 (기본 1~5챕터 + 6챕터 채석큐브)
+const BASE_CHAPTERS = [
+  {
+    id: 1,
+    key: 'residential',
+    name: '주거지',
+    engName: 'HOUSING',
+    colorName: '파란색',
+    themeHex: '#2563EB',
+    bgLight: 'bg-blue-50',
+    borderLight: 'border-blue-300',
+    textMain: 'text-blue-800',
+    badgeBg: 'bg-blue-600',
+    ruleTitle: '가장 큰 그룹 안의 타일만 점수',
+    ruleDesc: '서로 인접하게 연결된 파란색 주거지 타일 무리 중, 가장 큰 단일 그룹의 타일 개수만 계산합니다.',
+    iconType: 'home',
+  },
+  {
+    id: 2,
+    key: 'market',
+    name: '시장',
+    engName: 'MARKET',
+    colorName: '노란색',
+    themeHex: '#D97706',
+    bgLight: 'bg-amber-50',
+    borderLight: 'border-amber-300',
+    textMain: 'text-amber-800',
+    badgeBg: 'bg-amber-500',
+    ruleTitle: '따로 떨어진 타일만 점수',
+    ruleDesc: '다른 노란색 시장 타일과 한 면도 맞닿아 있지 않고 홀로 떨어져 있는 타일만 계산합니다.',
+    iconType: 'store',
+  },
+  {
+    id: 3,
+    key: 'barracks',
+    name: '병영',
+    engName: 'BARRACKS',
+    colorName: '빨간색',
+    themeHex: '#DC2626',
+    bgLight: 'bg-red-50',
+    borderLight: 'border-red-300',
+    textMain: 'text-red-800',
+    badgeBg: 'bg-red-600',
+    ruleTitle: '가장자리의 타일만 점수',
+    ruleDesc: '내 도시의 외곽 경계(빈 공간과 맞닿은 외곽선)에 위치한 빨간색 병영 타일만 계산합니다.',
+    iconType: 'shield',
+  },
+  {
+    id: 4,
+    key: 'temple',
+    name: '신전',
+    engName: 'TEMPLE',
+    colorName: '보라색',
+    themeHex: '#7C3AED',
+    bgLight: 'bg-purple-50',
+    borderLight: 'border-purple-300',
+    textMain: 'text-purple-800',
+    badgeBg: 'bg-purple-600',
+    ruleTitle: '완전히 둘러싸인 타일만 점수',
+    ruleDesc: '육각형의 6면 모두가 다른 타일로 빈틈없이 둘러싸여 있는 보라색 신전 타일만 계산합니다.',
+    iconType: 'landmark',
+  },
+  {
+    id: 5,
+    key: 'garden',
+    name: '정원',
+    engName: 'GARDEN',
+    colorName: '초록색',
+    themeHex: '#16A34A',
+    bgLight: 'bg-emerald-50',
+    borderLight: 'border-emerald-300',
+    textMain: 'text-emerald-800',
+    badgeBg: 'bg-emerald-600',
+    ruleTitle: '모든 타일이 점수',
+    ruleDesc: '배치 위치나 인접 조건에 상관없이 도시 내의 모든 초록색 정원 타일을 전부 계산합니다.',
+    iconType: 'trees',
+  },
+  {
+    id: 6,
+    key: 'quarry',
+    name: '채석큐브 (석재)',
+    engName: 'QUARRY STONES',
+    colorName: '회색 · 석재',
+    themeHex: '#57534E',
+    bgLight: 'bg-stone-100',
+    borderLight: 'border-stone-400',
+    textMain: 'text-stone-800',
+    badgeBg: 'bg-stone-700',
+    ruleTitle: '채석큐브 개당 +1점 획득',
+    ruleDesc: '게임 종료 시 보유하고 있는 석재(채석큐브) 1개당 1점을 획득합니다.',
+    iconType: 'box',
+  },
+];
 
-        body { 
-            background-color: var(--bg-color); 
-            color: var(--text-main); 
-            display: flex; 
-            flex-direction: column; 
-            min-height: 100vh; 
-            align-items: center; 
-            padding: 12px; 
-            padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 12px);
-        }
+// 인원수별 게임 시작 준비단계 안내 데이터
+const SETUP_INSTRUCTIONS = {
+  1: {
+    title: '1인 솔로 모드: 저명 건축가와의 대결',
+    subtitle: '가상의 인물 "저명 건축가"와 지혜를 겨룹니다.',
+    steps: [
+      '2+가 표시된 모든 타일을 가져와 타일 3개짜리 더미 11개를 만드세요.',
+      '당신은 시작타일 1개와 석재(채석큐브) 1개를 가져옵니다.',
+      '저명 건축가는 시작타일 1개와 석재(채석큐브) 2개를 갖고 게임을 시작합니다.',
+    ],
+    cubesSummary: [
+      { label: '나 (플레이어 1)', cubes: 1 },
+      { label: '저명 건축가', cubes: 2 },
+    ],
+  },
+  2: {
+    title: '2인 대전 모드: 에게해의 두 건축가',
+    subtitle: '타일 더미와 초기 채석큐브를 세팅하세요.',
+    steps: [
+      '2+ 타일을 모두 가져옵니다.',
+      '3타일로 여러 개(더미)를 만들어주세요.',
+      '첫 번째 플레이어는 채석큐브 1개, 두 번째 플레이어는 채석큐브 2개를 획득합니다.',
+    ],
+    cubesSummary: [
+      { label: '첫 번째 플레이어', cubes: 1 },
+      { label: '두 번째 플레이어', cubes: 2 },
+    ],
+  },
+  3: {
+    title: '3인 경쟁 모드: 세 폴리스의 번영',
+    subtitle: '3인용 타일 구성 및 초기 석재를 지급합니다.',
+    steps: [
+      '2+ / 3+ 타일을 모두 가져옵니다.',
+      '4타일 묶음으로 여러 더미를 만드세요.',
+      '첫 번째 플레이어 1채석큐브, 두 번째 2채석큐브, 세 번째 3채석큐브를 획득합니다.',
+    ],
+    cubesSummary: [
+      { label: '첫 번째 플레이어', cubes: 1 },
+      { label: '두 번째 플레이어', cubes: 2 },
+      { label: '세 번째 플레이어', cubes: 3 },
+    ],
+  },
+  4: {
+    title: '4인 대규모 모드: 위대한 아크로폴리스',
+    subtitle: '모든 타일을 사용하여 웅장한 도시를 건설합니다.',
+    steps: [
+      '모든 타일을 사용합니다.',
+      '5타일로 여러 더미를 만드세요.',
+      '첫 번째 플레이어 1채석큐브, 두 번째 2채석큐브, 세 번째 3채석큐브, 네 번째 4채석큐브를 획득합니다.',
+    ],
+    cubesSummary: [
+      { label: '첫 번째 플레이어', cubes: 1 },
+      { label: '두 번째 플레이어', cubes: 2 },
+      { label: '세 번째 플레이어', cubes: 3 },
+      { label: '네 번째 플레이어', cubes: 4 },
+    ],
+  },
+};
 
-        .container { 
-            width: 100%; 
-            max-width: 480px; 
-            display: flex; 
-            flex-direction: column; 
-            flex: 1; 
-        }
-        
-        header { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            margin-bottom: 16px; 
-            padding-bottom: 12px; 
-            border-bottom: 1px solid var(--card-border); 
-        }
-        .header-title-area { display: flex; flex-direction: column; gap: 2px; }
-        .header-title { color: var(--text-main); font-size: 17px; font-weight: 800; letter-spacing: -0.5px; }
-        .header-subtitle { color: var(--accent-color); font-size: 10px; font-weight: 600; opacity: 0.9; text-transform: uppercase; letter-spacing: 0.5px; }
-        .header-buttons { display: flex; gap: 8px; }
-        .btn-top-header { background-color: var(--button-bg); color: var(--accent-color); border: 1px solid var(--card-border); padding: 8px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
-        .btn-top-header:active { transform: scale(0.95); background-color: #324252; }
-        .btn-top-danger { background-color: var(--danger-bg); color: #ffadad; border-color: var(--danger-border); }
-        
-        .progress-section { margin-bottom: 16px; }
-        .progress-info-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .step-badge { background: var(--button-bg); border: 1px solid var(--card-border); color: var(--accent-color); padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; }
-        .progress-bar-container { width: 100%; background-color: var(--input-bg); height: 6px; border-radius: 3px; border: 1px solid var(--card-border); overflow: hidden; }
-        .progress-bar-fill { height: 100%; background: linear-gradient(90deg, #c29333, var(--accent-color)); width: 0%; transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+// SVG: 고대 그리스 도리아식 기둥 & 붉은 리본 장식
+const DoricColumn = ({ side = 'left' }) => (
+  <svg
+    viewBox="0 0 60 320"
+    className={`w-8 sm:w-11 h-full select-none pointer-events-none opacity-90 ${
+      side === 'right' ? 'scale-x-[-1]' : ''
+    }`}
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <defs>
+      <linearGradient id={`marbleGrad-${side}`} x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stopColor="#E6DCCB" />
+        <stop offset="35%" stopColor="#FAF6EE" />
+        <stop offset="75%" stopColor="#DFD3BE" />
+        <stop offset="100%" stopColor="#B8A990" />
+      </linearGradient>
+      <linearGradient id="crimsonRibbon" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stopColor="#B91C1C" />
+        <stop offset="100%" stopColor="#7F1D1D" />
+      </linearGradient>
+    </defs>
+    {/* 주두 (Capital) */}
+    <rect x="4" y="6" width="52" height="10" rx="2" fill={`url(#marbleGrad-${side})`} stroke="#A8987E" strokeWidth="1" />
+    <path d="M8 16 H52 L46 28 H14 Z" fill={`url(#marbleGrad-${side})`} stroke="#A8987E" strokeWidth="1" />
+    <rect x="12" y="28" width="36" height="5" rx="1" fill="#D4C5AE" />
+    {/* 기둥 몸통 (Fluted Shaft) */}
+    <rect x="14" y="33" width="32" height="265" fill={`url(#marbleGrad-${side})`} stroke="#B5A68E" strokeWidth="1" />
+    {/* 세로 홈 (Flutes) */}
+    <line x1="20" y1="36" x2="20" y2="294" stroke="#C5B69E" strokeWidth="1.5" />
+    <line x1="26" y1="36" x2="26" y2="294" stroke="#C5B69E" strokeWidth="1.5" />
+    <line x1="33" y1="36" x2="33" y2="294" stroke="#C5B69E" strokeWidth="1.5" />
+    <line x1="39" y1="36" x2="39" y2="294" stroke="#C5B69E" strokeWidth="1.5" />
+    {/* 붉은 의식용 리본 (표지 아트 모티브) */}
+    <path
+      d="M13 38 C22 44, 38 44, 47 38 L47 45 C38 51, 22 51, 13 45 Z"
+      fill="url(#crimsonRibbon)"
+    />
+    <path
+      d="M44 43 C52 65, 48 95, 55 122 C50 118, 46 95, 41 46 Z"
+      fill="url(#crimsonRibbon)"
+      className="animate-pulse"
+    />
+    {/* 주초 (Base) */}
+    <rect x="10" y="298" width="40" height="8" rx="1" fill={`url(#marbleGrad-${side})`} stroke="#A8987E" strokeWidth="1" />
+    <rect x="4" y="306" width="52" height="10" rx="2" fill={`url(#marbleGrad-${side})`} stroke="#A8987E" strokeWidth="1" />
+  </svg>
+);
 
-        .section-box { background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; padding: 16px; margin-bottom: 14px; box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
-        .section-title-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-        .section-title { font-size: 15px; font-weight: 800; color: var(--accent-color); letter-spacing: -0.3px; }
-        .section-desc { font-size: 12px; color: var(--text-sub); margin-bottom: 14px; line-height: 1.4; white-space: pre-line; }
+// SVG: 일렁이는 황동 화로 불꽃 (표지 하단 성화 모티브)
+const BrazierTorch = () => (
+  <svg viewBox="0 0 48 56" className="w-8 h-9 sm:w-9 sm:h-11 drop-shadow-md">
+    <defs>
+      <radialGradient id="flameOuter" cx="50%" cy="65%" r="55%">
+        <stop offset="0%" stopColor="#FEF08A" />
+        <stop offset="50%" stopColor="#F59E0B" />
+        <stop offset="100%" stopColor="#DC2626" stopOpacity="0" />
+      </radialGradient>
+    </defs>
+    {/* 불꽃 애니메이션 */}
+    <g className="origin-bottom animate-bounce" style={{ animationDuration: '1.8s' }}>
+      <path
+        d="M24 4 C31 14, 37 22, 33 32 C30 37, 18 37, 15 32 C11 22, 17 14, 24 4 Z"
+        fill="url(#flameOuter)"
+      />
+      <path
+        d="M24 12 C28 19, 31 24, 28 31 C26 34, 22 34, 20 31 C17 24, 20 19, 24 12 Z"
+        fill="#FEF9C3"
+      />
+    </g>
+    {/* 청동 화로 받침 */}
+    <path d="M12 33 H36 L32 42 H16 Z" fill="#44403C" stroke="#292524" strokeWidth="1.5" />
+    <path d="M18 42 L13 52 M30 42 L35 52 M24 42 V52" stroke="#292524" strokeWidth="2.5" strokeLinecap="round" />
+  </svg>
+);
 
-        .expansion-card { display: flex; align-items: center; justify-content: space-between; background: var(--input-bg); padding: 12px 14px; border-radius: 10px; border: 1px solid var(--card-border); margin-bottom: 8px; cursor: pointer; transition: all 0.15s; }
-        .expansion-card.checked { border-color: var(--accent-color); background: #262c24; box-shadow: 0 0 10px var(--accent-glow); }
-        .expansion-info { display: flex; flex-direction: column; gap: 2px; }
-        .expansion-name { font-size: 13px; font-weight: 700; color: var(--text-main); }
-        .expansion-sub { font-size: 10px; color: var(--text-sub); }
-        .custom-checkbox { width: 22px; height: 22px; border-radius: 6px; border: 1px solid var(--card-border); background: var(--button-bg); display: flex; align-items: center; justify-content: center; color: var(--accent-color); font-size: 13px; font-weight: bold; flex-shrink: 0; }
-        .expansion-card.checked .custom-checkbox { background: var(--accent-color); color: #12161a; border-color: var(--accent-color); }
+// 챕터 진행에 따라 층층이 지어지는 아크로폴리스 신전 미니 일러스트
+const AcropolisProgressBuilder = ({ currentChapter, isAthena }) => {
+  return (
+    <div className="relative w-full max-w-md mx-auto h-24 sm:h-28 rounded-xl overflow-hidden border border-amber-300/70 shadow-inner bg-gradient-to-b from-sky-200 via-amber-100 to-amber-200/80 flex items-end justify-center px-4 pt-2">
+      {/* 에게해 일출 태양 */}
+      <div
+        className="absolute top-2 w-14 h-14 rounded-full bg-gradient-to-t from-amber-300 to-yellow-100 blur-[1px] opacity-90 transition-all duration-700"
+        style={{
+          transform: `translateY(${Math.max(0, (6 - currentChapter) * 4)}px) scale(${
+            0.85 + currentChapter * 0.04
+          })`,
+        }}
+      />
+      {/* 에게해 수평선 */}
+      <div className="absolute bottom-0 inset-x-0 h-5 bg-gradient-to-r from-[#1B4965] via-[#27668C] to-[#1B4965] opacity-90" />
 
-        .player-count-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
-        .pc-btn { background-color: var(--button-bg); border: 1px solid var(--card-border); color: var(--text-main); padding: 12px 0; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; text-align: center; transition: all 0.15s; }
-        .pc-btn.active { background-color: #3b3018; border-color: var(--accent-color); color: var(--accent-color); box-shadow: 0 0 8px var(--accent-glow); }
-        .pc-btn:active { transform: scale(0.96); }
-        
-        .config-row { display: flex; align-items: center; background-color: var(--input-bg); border: 1px solid var(--card-border); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; gap: 10px; }
-        .config-input-wrapper { display: flex; align-items: center; background: var(--button-bg); border: 1px solid var(--card-border); border-radius: 8px; padding: 6px 10px; flex: 1; }
-        .config-input { flex: 1; background: transparent; border: none; color: var(--text-main); font-size: 16px; font-weight: 600; outline: none; width: 100%; }
+      {/* 단계별 건축되는 그리스 신전 SVG */}
+      <svg viewBox="0 0 260 95" className="relative z-10 w-64 h-24 overflow-visible">
+        {/* 1단계(챕터1+): 언덕 & 대리석 기단 (Stylobate) */}
+        <g
+          className={`transition-all duration-500 ${
+            currentChapter >= 1 ? 'opacity-100 translate-y-0' : 'opacity-20 translate-y-3'
+          }`}
+        >
+          <path d="M20 88 L45 76 H215 L240 88 Z" fill="#D6C7B2" stroke="#8C7A6B" strokeWidth="1" />
+          <rect x="52" y="70" width="156" height="6" rx="1" fill="#FAF6EE" stroke="#A8987E" strokeWidth="1" />
+          <rect x="58" y="65" width="144" height="5" rx="1" fill="#F3ECE0" stroke="#A8987E" strokeWidth="1" />
+        </g>
 
-        .btn-primary { width: 100%; background: linear-gradient(135deg, #c29333, var(--accent-color)); border: 1px solid #ffd985; color: #161c22; padding: 14px; border-radius: 12px; font-size: 15px; font-weight: 800; cursor: pointer; text-align: center; margin-top: 10px; box-shadow: 0 4px 12px rgba(230, 179, 71, 0.2); transition: all 0.15s; }
-        .btn-primary:active { transform: scale(0.98); opacity: 0.9; }
-        .btn-edit-mode { background: linear-gradient(135deg, #202c38, #2e3f52); border-color: #425870; color: #73b3e7; }
+        {/* 2단계(챕터2+): 좌측 시장 황금 돔 & 외곽 기둥 */}
+        <g
+          className={`transition-all duration-500 ${
+            currentChapter >= 2 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+          }`}
+        >
+          <path d="M32 75 A16 14 0 0 1 64 75 Z" fill="#F59E0B" stroke="#B45309" strokeWidth="1" />
+          <rect x="68" y="36" width="8" height="29" fill="#FAF6EE" stroke="#A8987E" strokeWidth="1" />
+          <rect x="184" y="36" width="8" height="29" fill="#FAF6EE" stroke="#A8987E" strokeWidth="1" />
+        </g>
 
-        .btn-mini-calc { background-color: var(--button-bg); border: 1px solid var(--card-border); color: var(--accent-color); padding: 6px 10px; border-radius: 8px; font-size: 11px; cursor: pointer; font-weight: 700; transition: all 0.15s; }
-        .btn-mini-calc:active { background-color: #324252; transform: scale(0.95); }
+        {/* 3단계(챕터3+): 내측 붉은 병영 벽체 & 중앙 기둥 */}
+        <g
+          className={`transition-all duration-500 ${
+            currentChapter >= 3 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+          }`}
+        >
+          <rect x="82" y="38" width="96" height="27" fill="#9E2A2B" opacity="0.85" />
+          <rect x="96" y="36" width="8" height="29" fill="#FAF6EE" stroke="#A8987E" strokeWidth="1" />
+          <rect x="126" y="36" width="8" height="29" fill="#FAF6EE" stroke="#A8987E" strokeWidth="1" />
+          <rect x="156" y="36" width="8" height="29" fill="#FAF6EE" stroke="#A8987E" strokeWidth="1" />
+        </g>
 
-        .mini-calc-panel { background-color: var(--input-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 12px; margin-top: 10px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 8px; box-shadow: inset 0 2px 8px rgba(0,0,0,0.4); }
-        .mini-calc-screen { width: 100%; background: #0a0e12; border: 1px solid var(--card-border); border-radius: 8px; color: var(--accent-color); font-size: 18px; font-weight: bold; text-align: right; padding: 10px 12px; outline: none; }
-        .mini-calc-keypad { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
-        .mc-btn { background-color: var(--button-bg); border: 1px solid var(--card-border); color: var(--text-main); padding: 12px 0; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; text-align: center; }
-        .mc-btn:active { background-color: #35495e; transform: scale(0.95); }
-        .mc-btn-op { color: var(--accent-color); background-color: #263544; }
-        .mc-btn-equal { background-color: #4a3c18; border-color: var(--accent-color); color: var(--accent-color); }
-        .mc-assign-box { background-color: #19222c; border: 1px solid var(--accent-color); border-radius: 8px; padding: 10px; margin-top: 6px; display: flex; flex-direction: column; gap: 6px; }
-        .mc-assign-title { font-size: 12px; color: var(--accent-color); font-weight: bold; text-align: center; }
-        .mc-assign-buttons { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
-        .mc-target-btn { background-color: var(--button-bg); border: 1px solid var(--card-border); color: var(--text-main); padding: 8px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; }
-        .mc-target-btn:active { transform: scale(0.95); }
+        {/* 4단계(챕터4+): 보라빛 신전 엔타블러처 & 박공 지붕 (Pediment) */}
+        <g
+          className={`transition-all duration-500 ${
+            currentChapter >= 4 ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
+          }`}
+        >
+          <rect x="62" y="30" width="136" height="6" fill="#EDE4D3" stroke="#8C7A6B" strokeWidth="1" />
+          <polygon
+            points="56,30 130,10 204,30"
+            fill="#FAF6EE"
+            stroke="#7C3AED"
+            strokeWidth="1.5"
+          />
+          <polygon points="72,28 130,14 188,28" fill="#DDD6FE" />
+        </g>
 
-        .player-score-card { background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 6px rgba(0,0,0,0.15); transition: border-color 0.15s; }
-        .player-score-card:focus-within { border-color: var(--accent-color); }
-        
-        .player-info-area { display: flex; align-items: center; gap: 8px; }
-        .player-card-name { font-size: 14px; font-weight: 700; color: var(--text-main); }
+        {/* 5단계(챕터5+): 푸른 정원 사이프러스 나무 & 테라스 */}
+        <g
+          className={`transition-all duration-500 ${
+            currentChapter >= 5 ? 'opacity-100 scale-100' : 'opacity-0 scale-75'
+          }`}
+        >
+          <path d="M22 78 Q26 54 30 78 Z" fill="#15803D" />
+          <path d="M230 78 Q234 52 238 78 Z" fill="#16A34A" />
+          <path d="M218 80 Q222 60 226 80 Z" fill="#15803D" />
+        </g>
 
-        .stepper-controls { display: flex; align-items: center; gap: 6px; }
-        .step-btn { background-color: var(--button-bg); border: 1px solid var(--card-border); color: var(--text-main); width: 38px; height: 38px; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.1s; flex-shrink: 0; }
-        .step-btn:active { background-color: #35495e; transform: scale(0.92); }
-        
-        .score-input { background-color: var(--input-bg); border: 1px solid var(--card-border); color: var(--text-main); width: 64px; height: 38px; text-align: center; font-size: 16px; font-weight: 800; border-radius: 8px; outline: none; transition: border-color 0.15s; }
-        .score-input:focus { border-color: var(--accent-color); }
-
-        .nav-button-group { display: flex; gap: 8px; margin-top: 16px; margin-bottom: 16px; }
-        .btn-secondary { flex: 1; background-color: var(--button-bg); border: 1px solid var(--card-border); color: var(--text-main); padding: 14px; border-radius: 12px; font-size: 14px; font-weight: 700; cursor: pointer; text-align: center; transition: all 0.15s; }
-        .btn-secondary:active { background-color: #324252; transform: scale(0.98); }
-        
-        .live-score-bar { background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: 10px; padding: 10px 14px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-around; font-size: 11px; color: var(--text-sub); margin-bottom: 14px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); }
-        .live-score-item { display: flex; align-items: center; gap: 4px; }
-        .live-score-item span { color: var(--text-main); font-weight: 800; font-size: 12px; }
-        
-        .winner-card { 
-            background: linear-gradient(135deg, #1c2833, #3a2c14, #121922); 
-            border: 2px solid var(--accent-color); 
-            border-radius: 16px; 
-            padding: 24px 16px; 
-            text-align: center; 
-            margin-bottom: 16px; 
-            box-shadow: 0 6px 24px rgba(230, 179, 71, 0.2);
-            position: relative;
-            overflow: hidden;
-        }
-        .winner-explorer-icon-container {
-            position: relative;
-            width: 68px;
-            height: 68px;
-            margin: 0 auto 10px auto;
-            background: rgba(230, 179, 71, 0.1);
-            border: 2px solid var(--accent-color);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 0 12px var(--accent-glow);
-        }
-        .winner-explorer-svg { width: 36px; height: 36px; fill: var(--accent-color); }
-        .winner-name-badge { font-size: 22px; font-weight: 800; color: #fff; margin: 6px 0 2px 0; display: inline-flex; align-items: center; gap: 6px; }
-        .winner-score-badge { font-size: 28px; font-weight: 900; color: var(--accent-color); text-shadow: 0 2px 6px rgba(0,0,0,0.5); }
-
-        .ranking-card { background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: 10px; padding: 14px; margin-bottom: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
-        .mvp-section-title { font-size: 13px; font-weight: 800; color: var(--accent-color); margin: 16px 0 8px 4px; letter-spacing: -0.2px; }
-        .mvp-card { background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
-        
-        .creator-footer { text-align: center; font-size: 11px; color: var(--text-sub); margin-top: 20px; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 6px; }
-        .hidden { display: none !important; }
-    </style>
-</head>
-<body>
-
-<div class="container">
-    <header>
-        <div class="header-title-area">
-            <span class="header-title">폴리스의 건축가들</span>
-            <span class="header-subtitle" id="header-sub-author">Score Calculator</span>
-        </div>
-        <div class="header-buttons">
-            <button class="btn-top-header btn-top-danger" onclick="fullResetApp()">초기화</button>
-        </div>
-    </header>
-
-    <!-- 1단계: 설정 화면 -->
-    <div id="setup-screen">
-        <div class="section-box">
-            <div class="section-title">아크로폴리스 준비</div>
-            <div class="section-desc">변형 규칙 옵션(선택 사항) 및 참여 인원수를 선택하십시오[span_7](start_span)[span_7](end_span).</div>
-            
-            <div style="font-size: 12px; font-weight: 700; color: var(--accent-color); margin-bottom: 6px;">변형 규칙 (2배 점수 조건)[span_8](start_span)[span_8](end_span)</div>
-            <div class="expansion-card" id="card-var-residential" onclick="toggleVariant('residential')">
-                <div class="expansion-info">
-                    <div class="expansion-name">주거지 변형 규칙</div>
-                    <div class="expansion-sub">총 가치 10 이상 시 점수 2배[span_9](start_span)[span_9](end_span)</div>
-                </div>
-                <div class="custom-checkbox" id="chk-residential"></div>
-            </div>
-            <div class="expansion-card" id="card-var-market" onclick="toggleVariant('market')">
-                <div class="expansion-info">
-                    <div class="expansion-name">시장 변형 규칙</div>
-                    <div class="expansion-sub">시장 광장 인접 시 점수 2배[span_10](start_span)[span_10](end_span)</div>
-                </div>
-                <div class="custom-checkbox" id="chk-market"></div>
-            </div>
-            <div class="expansion-card" id="card-var-barracks" onclick="toggleVariant('barracks')">
-                <div class="expansion-info">
-                    <div class="expansion-name">병영 변형 규칙</div>
-                    <div class="expansion-sub">빈칸 3~4개 인접 시 점수 2배[span_11](start_span)[span_11](end_span)</div>
-                </div>
-                <div class="custom-checkbox" id="chk-barracks"></div>
-            </div>
-            <div class="expansion-card" id="card-var-temple" onclick="toggleVariant('temple')">
-                <div class="expansion-info">
-                    <div class="expansion-name">신전 변형 규칙</div>
-                    <div class="expansion-sub">높은 층(2층 이상) 위치 시 점수 2배[span_12](start_span)[span_12](end_span)</div>
-                </div>
-                <div class="custom-checkbox" id="chk-temple"></div>
-            </div>
-            <div class="expansion-card" id="card-var-garden" onclick="toggleVariant('garden')">
-                <div class="expansion-info">
-                    <div class="expansion-name">정원 변형 규칙</div>
-                    <div class="expansion-sub">호수 인접 시 점수 2배[span_13](start_span)[span_13](end_span)</div>
-                </div>
-                <div class="custom-checkbox" id="chk-garden"></div>
-            </div>
-
-            <div style="font-size: 12px; font-weight: 700; color: var(--accent-color); margin-top: 14px; margin-bottom: 6px;">참여 인원</div>
-            <div class="player-count-grid" id="player-count-buttons"></div>
-        </div>
-
-        <div class="section-box">
-            <div class="section-title">건축가 설정</div>
-            <div class="section-desc">플레이어(건축가)의 이름을 지정하세요[span_14](start_span)[span_14](end_span).</div>
-            <div id="player-config-list"></div>
-        </div>
-
-        <button class="btn-primary" onclick="startCalculator()">점수 계산 시작</button>
-        
-        <div class="creator-footer">
-            <span style="color:var(--accent-color);">✦</span> 제작자 천상민
-        </div>
+        {/* 6단계(챕터6): 황금 아크로폴리스 완성 광채 & 아테나 월계관 */}
+        <g
+          className={`transition-all duration-700 ${
+            currentChapter >= 6 ? 'opacity-100 scale-100' : 'opacity-0 scale-50'
+          }`}
+        >
+          <circle
+            cx="130"
+            cy="8"
+            r={isAthena ? '7' : '5'}
+            fill={isAthena ? '#F59E0B' : '#FBBF24'}
+            stroke="#FFFBEB"
+            strokeWidth="1.5"
+          />
+          {isAthena && (
+            <text x="130" y="24" textAnchor="middle" fontSize="8" fontWeight="bold" fill="#92400E">
+              ATHENA
+            </text>
+          )}
+        </g>
+      </svg>
     </div>
+  );
+};
 
-    <!-- 2단계: 점수 입력 화면 -->
-    <div id="calculator-screen" class="hidden">
-        <div class="progress-section">
-            <div class="progress-info-row">
-                <span class="step-badge" id="step-counter">STEP 1 / X</span>
-                <button class="btn-mini-calc" onclick="toggleMiniCalc()">🧮 미니 계산기</button>
-            </div>
-            <div class="progress-bar-container">
-                <div class="progress-bar-fill" id="progress-bar-fill"></div>
-            </div>
-        </div>
+// 챕터 아이콘 렌더러
+const ChapterIcon = ({ type, className = 'w-5 h-5' }) => {
+  switch (type) {
+    case 'home':
+      return <Home className={className} />;
+    case 'store':
+      return <Store className={className} />;
+    case 'shield':
+      return <Shield className={className} />;
+    case 'landmark':
+      return <Landmark className={className} />;
+    case 'trees':
+      return <Trees className={className} />;
+    case 'box':
+    default:
+      return <Box className={className} />;
+  }
+};
 
-        <div class="section-box" style="padding: 14px 16px;">
-            <div class="section-title-row">
-                <div id="step-title" class="section-title">단계 이름</div>
-            </div>
-            <div id="step-desc" class="section-desc" style="margin-bottom: 0;">점수 설명</div>
-            
-            <div id="mini-calc-panel" class="mini-calc-panel hidden">
-                <input type="text" id="mc-screen" class="mini-calc-screen" value="0" readonly>
-                <div class="mini-calc-keypad">
-                    <button class="mc-btn mc-btn-op" onclick="mcClear()">C</button>
-                    <button class="mc-btn mc-btn-op" onclick="mcAppend('/')">÷</button>
-                    <button class="mc-btn mc-btn-op" onclick="mcAppend('*')">×</button>
-                    <button class="mc-btn mc-btn-op" onclick="mcBack()">⌫</button>
-                    <button class="mc-btn" onclick="mcAppend('7')">7</button>
-                    <button class="mc-btn" onclick="mcAppend('8')">8</button>
-                    <button class="mc-btn" onclick="mcAppend('9')">9</button>
-                    <button class="mc-btn mc-btn-op" onclick="mcAppend('-')">-</button>
-                    <button class="mc-btn" onclick="mcAppend('4')">4</button>
-                    <button class="mc-btn" onclick="mcAppend('5')">5</button>
-                    <button class="mc-btn" onclick="mcAppend('6')">6</button>
-                    <button class="mc-btn mc-btn-op" onclick="mcAppend('+')">+</button>
-                    <button class="mc-btn" onclick="mcAppend('1')">1</button>
-                    <button class="mc-btn" onclick="mcAppend('2')">2</button>
-                    <button class="mc-btn" onclick="mcAppend('3')">3</button>
-                    <button class="mc-btn mc-btn-equal" onclick="mcCalculate()">=</button>
-                    <button class="mc-btn" onclick="mcAppend('0')" style="grid-column: span 2;">0</button>
-                    <button class="mc-btn" onclick="mcAppend('.')">.</button>
-                </div>
-                <div id="mc-assign-box" class="mc-assign-box hidden">
-                    <div class="mc-assign-title" id="mc-result-text">결과: 0</div>
-                    <div class="mc-assign-buttons" id="mc-target-buttons"></div>
-                </div>
-            </div>
-        </div>
+export default function App() {
+  // 화면 단계: 'setup' | 'scoring' | 'result'
+  const [screen, setScreen] = useState('setup');
 
-        <div class="live-score-bar" id="live-score-bar"></div>
-        <div id="player-score-inputs"></div>
+  // 게임 설정 상태
+  const [playerCount, setPlayerCount] = useState(2);
+  const [isAthena, setIsAthena] = useState(false);
+  const [playerNames, setPlayerNames] = useState([
+    '플레이어 1',
+    '플레이어 2',
+    '플레이어 3',
+    '플레이어 4',
+  ]);
 
-        <div class="nav-button-group">
-            <button class="btn-secondary" onclick="prevStep()">이전 단계</button>
-            <button class="btn-primary" style="margin-top:0; flex:1.5;" id="next-btn" onclick="nextStep()">다음 단계</button>
-        </div>
-    </div>
+  // 게임 시작 준비 알림 모달 표시 여부
+  const [showSetupModal, setShowSetupModal] = useState(false);
 
-    <!-- 3단계: 결과 화면 -->
-    <div id="result-screen" class="hidden">
-        <div class="winner-card">
-            <div style="font-size: 10px; color: var(--accent-color); margin-bottom: 4px; font-weight:800; letter-spacing: 1.5px;">🏛️ 최고의 수석 건축가 🏛️</div>
-            
-            <div class="winner-explorer-icon-container">
-                <svg class="winner-explorer-svg" viewBox="0 0 512 512">
-                    <path d="M256 32c125.5 0 228 102.5 228 228s-102.5 228-228 228S28 385.5 28 260 130.5 32 256 32zm0 64c-88.4 0-160 71.6-160 160 0 36.4 12.6 69.8 33.7 96.3l12.4-12.4c-16.7-22-26.1-49.4-26.1-83.9 0-66.3 53.7-120 120-120s120 53.7 120 120c0 34.5-9.4 61.9-26.1 83.9l12.4 12.4c21.1-26.5 33.7-59.9 33.7-96.3 0-88.4-71.6-160-160-160zm0 48c61.9 0 112 50.1 112 112 0 25.1-8.5 48.2-22.7 66.5L331 303.3c-20.9-19-34.6-45.9-36.8-76.3h-76.4c-2.2 30.4-15.9 57.3-36.8 76.3l-14.3-14.3C152.5 292.2 144 269.1 144 244c0-61.9 50.1-112 112-112zm0 64c-26.5 0-48 21.5-48 48s21.5 48 48 48 48-21.5 48-48-21.5-48-48-48z"/>
-                </svg>
-            </div>
+  // 현재 진행 중인 챕터 (1 ~ 6)
+  const [currentChapter, setCurrentChapter] = useState(1);
 
-            <div class="winner-name-badge" id="winner-name-display">-</div>
-            <div class="winner-score-badge" id="winner-score-display">0점</div>
-            <div style="font-size: 11px; color: var(--text-sub); margin-top: 8px;" id="winner-flavor-text">-</div>
-        </div>
-        
-        <div class="mvp-section-title">🏆 부문별 건축 하이라이트</div>
-        <div id="mvp-cards-container"></div>
+  // 플레이어별 점수 입력 데이터
+  // 구조: { [playerIndex]: { residential: { stars: 0, tiles: 0 }, ..., quarry: { cubes: 0 } } }
+  const [scoresData, setScoresData] = useState({});
 
-        <div class="mvp-section-title" style="margin-top: 20px;">📊 최종 순위</div>
-        <div id="ranking-list"></div>
-        
-        <button class="btn-primary btn-edit-mode" onclick="goToEditSteps()" style="margin-top:14px;">점수 항목 다시 수정하기</button>
-        <button class="btn-primary" onclick="resetApp()" style="margin-top: 8px;">새로운 설정으로 시작하기</button>
-    </div>
-</div>
+  // 결과 복사 알림 토스트
+  const [copiedToast, setCopiedToast] = useState(false);
 
-<script>
-    let playerCount = 4;
-    let variants = {
-        residential: false,
-        market: false,
-        barracks: false,
-        temple: false,
-        garden: false
-    };
-    
-    let baseSteps = [
-        { id: 'residential', title: "1. 주거지 구역", desc: "가장 큰 주거지 그룹의 가치 × 주거지 광장 별 총합[span_15](start_span)[span_15](end_span)\n(변형 규칙 적용 시 조건 충족 시 2배)[span_16](start_span)[span_16](end_span)", awardName: "대단지 주거 설계상", flavor: "시민들이 조화롭게 어우러지는 가장 거대한 주거 구역을 완성한 건축가!" },
-        { id: 'market', title: "2. 시장 구역", desc: "독립된 시장 구역들의 가치 합산 × 시장 광장 별 총합[span_17](start_span)[span_17](end_span)\n(변형 규칙 적용 시 조건 충족 시 2배)[span_18](start_span)[span_18](end_span)", awardName: "황금 상권 개척상", flavor: "경쟁을 피해 완벽한 위치에 상권을 배치하여 번영을 이끈 상인들의 수호자!" },
-        { id: 'temple', title: "3. 신전 구역", desc: "완전히 둘러싸인 신전 구역 가치 합산 × 신전 광장 별 총합[span_19](start_span)[span_19](end_span)\n(변형 규칙 적용 시 조건 충족 시 2배)[span_20](start_span)[span_20](end_span)", awardName: "성스러운 신전상", flavor: "주변의 신도들을 완벽히 끌어모아 경외를 자아낸 신성한 성소의 설계자!" },
-        { id: 'barracks', title: "4. 병영 구역", desc: "도시 가장자리에 위치한 병영 가치 합산 × 병영 광장 별 총합[span_21](start_span)[span_21](end_span)\n(변형 규칙 적용 시 조건 충족 시 2배)[span_22](start_span)[span_22](end_span)", awardName: "철통 방어상", flavor: "폴리스의 국경을 난공불락으로 수호하는 용맹한 병영을 구축한 전략가!" },
-        { id: 'garden', title: "5. 정원 구역", desc: "모든 정원 구역 가치 합산 × 정원 광장 별 총합[span_23](start_span)[span_23](end_span)\n(변형 규칙 적용 시 조건 충족 시 2배)[span_24](start_span)[span_24](end_span)", awardName: "도심 속 오아시스상", flavor: "삭살한 도시를 아름답고 평화로운 휴식처로 탈바꿈시킨 조경의 마법사!" },
-        { id: 'stones', title: "6. 남은 석재", desc: "게임 종료 시 보유한 석재 큐브 1개당 1점 추가[span_25](start_span)[span_25](end_span)", awardName: "자원 비축왕상", flavor: "건설을 끝내고도 든든한 석재 자원을 곳곳에 남겨둔 자산가!" }
+  // 동적 챕터 정보 (아테나 확장 선택 시 6챕터 규칙 업데이트)
+  const chapters = useMemo(() => {
+    return BASE_CHAPTERS.map((ch) => {
+      if (ch.id === 6) {
+        if (isAthena) {
+          return {
+            ...ch,
+            name: '채석큐브 (아테나 확장)',
+            engName: 'ATHENA QUARRY',
+            colorName: '황금 · 석재',
+            themeHex: '#B45309',
+            bgLight: 'bg-amber-50',
+            borderLight: 'border-amber-400',
+            textMain: 'text-amber-900',
+            badgeBg: 'bg-gradient-to-r from-amber-600 to-yellow-600',
+            ruleTitle: '아테나 달성 체크 시 개당 +5점 (미체크 시 +1점)',
+            ruleDesc:
+              '각 플레이어별로 아테나 목표 달성 여부를 체크하세요. 달성 시 채석큐브 1개당 +5점, 미달성 시 +1점으로 계산됩니다.',
+          };
+        }
+        return ch;
+      }
+      return ch;
+    });
+  }, [isAthena]);
+
+  // 인원수 변경 시 1인 모드일 경우 2번째 슬롯 이름을 '저명 건축가'로 자동 세팅
+  const handleSelectPlayerCount = (count) => {
+    setPlayerCount(count);
+    setPlayerNames((prev) => {
+      const next = [...prev];
+      if (count === 1) {
+        next[1] = '저명 건축가';
+      } else if (next[1] === '저명 건축가') {
+        next[1] = '플레이어 2';
+      }
+      return next;
+    });
+  };
+
+  // 플레이어 이름 수정 핸들러
+  const handleNameChange = (idx, value) => {
+    setPlayerNames((prev) => {
+      const next = [...prev];
+      next[idx] = value;
+      return next;
+    });
+  };
+
+  // 입력창 포커스/클릭 시 전체 텍스트 선택 (모바일 Safari/Chrome 대응 포함)
+  const handleSelectAllOnFocus = (e) => {
+    const target = e.target;
+    target.select();
+    try {
+      target.setSelectionRange(0, target.value.length);
+    } catch (_) {
+      // 일부 input 타입에서 setSelectionRange 미지원 시 무시
+    }
+  };
+
+  // 숫자 문자열 정제 유틸리티 (0 ~ 99 범위 정수 반환)
+  const parseNumericInput = (rawValue) => {
+    const digitsOnly = String(rawValue).replace(/[^0-9]/g, '');
+    if (digitsOnly === '') return 0;
+    const parsed = parseInt(digitsOnly, 10);
+    return Number.isNaN(parsed) ? 0 : Math.max(0, Math.min(99, parsed));
+  };
+
+  // 실제 참여 엔티티 목록 (1인 모드일 경우 플레이어 1 + 저명 건축가 = 2명 대결)
+  const activeParticipants = useMemo(() => {
+    if (playerCount === 1) {
+      return [
+        { id: 0, name: playerNames[0].trim() || '플레이어 1', isRival: false },
+        { id: 1, name: '저명 건축가', isRival: true },
+      ];
+    }
+    return Array.from({ length: playerCount }, (_, idx) => ({
+      id: idx,
+      name: playerNames[idx].trim() || `플레이어 ${idx + 1}`,
+      isRival: false,
+    }));
+  }, [playerCount, playerNames]);
+
+  // 점수 데이터 초기화 및 게임 시작 알림창 오픈
+  const handleOpenStartModal = () => {
+    const initialScores = {};
+    const count = playerCount === 1 ? 2 : playerCount;
+    for (let i = 0; i < count; i++) {
+      // 기본 시작 석재 큐브 힌트 반영 (1인: 나 1 / 저명건축가 2, 다인: 1, 2, 3, 4개)
+      const initialCubes = playerCount === 1 ? (i === 0 ? 1 : 2) : i + 1;
+      initialScores[i] = {
+        residential: { stars: 0, tiles: 0 },
+        market: { stars: 0, tiles: 0 },
+        barracks: { stars: 0, tiles: 0 },
+        temple: { stars: 0, tiles: 0 },
+        garden: { stars: 0, tiles: 0 },
+        quarry: { cubes: initialCubes, athenaAchieved: false },
+      };
+    }
+    setScoresData(initialScores);
+    setCurrentChapter(1);
+    setShowSetupModal(true);
+  };
+
+  // 준비 알림창 확인 -> 챕터 1 점수 계산 진입
+  const handleConfirmStartGame = () => {
+    setShowSetupModal(false);
+    setScreen('scoring');
+  };
+
+  // 별 개수 업데이트 (0이 되면 타일 점수는 자동 0 처리, 기존 입력값은 유지하되 비활성화)
+  const updateStars = (playerId, chapterKey, delta) => {
+    setScoresData((prev) => {
+      const playerObj = prev[playerId] || {};
+      const chObj = playerObj[chapterKey] || { stars: 0, tiles: 0 };
+      const nextStars = Math.max(0, Math.min(99, chObj.stars + delta));
+      return {
+        ...prev,
+        [playerId]: {
+          ...playerObj,
+          [chapterKey]: {
+            ...chObj,
+            stars: nextStars,
+          },
+        },
+      };
+    });
+  };
+
+  // 별 개수 직접 숫자 입력 설정
+  const setStarsDirect = (playerId, chapterKey, rawValue) => {
+    const nextStars = parseNumericInput(rawValue);
+    setScoresData((prev) => {
+      const playerObj = prev[playerId] || {};
+      const chObj = playerObj[chapterKey] || { stars: 0, tiles: 0 };
+      return {
+        ...prev,
+        [playerId]: {
+          ...playerObj,
+          [chapterKey]: {
+            ...chObj,
+            stars: nextStars,
+          },
+        },
+      };
+    });
+  };
+
+  // 타일 개수 업데이트 (별 개수가 0이면 수정 불가)
+  const updateTiles = (playerId, chapterKey, delta) => {
+    setScoresData((prev) => {
+      const playerObj = prev[playerId] || {};
+      const chObj = playerObj[chapterKey] || { stars: 0, tiles: 0 };
+      if (chObj.stars === 0) return prev; // 별이 0개면 점수 등록 불가
+      const nextTiles = Math.max(0, Math.min(99, chObj.tiles + delta));
+      return {
+        ...prev,
+        [playerId]: {
+          ...playerObj,
+          [chapterKey]: {
+            ...chObj,
+            tiles: nextTiles,
+          },
+        },
+      };
+    });
+  };
+
+  // 타일 개수 직접 숫자 입력 설정 (별 개수가 0이면 수정 불가)
+  const setTilesDirect = (playerId, chapterKey, rawValue) => {
+    const nextTiles = parseNumericInput(rawValue);
+    setScoresData((prev) => {
+      const playerObj = prev[playerId] || {};
+      const chObj = playerObj[chapterKey] || { stars: 0, tiles: 0 };
+      if (chObj.stars === 0) return prev;
+      return {
+        ...prev,
+        [playerId]: {
+          ...playerObj,
+          [chapterKey]: {
+            ...chObj,
+            tiles: nextTiles,
+          },
+        },
+      };
+    });
+  };
+
+  // 채석큐브 개수 업데이트
+  const updateCubes = (playerId, delta) => {
+    setScoresData((prev) => {
+      const playerObj = prev[playerId] || {};
+      const qObj = playerObj.quarry || { cubes: 0, athenaAchieved: false };
+      const nextCubes = Math.max(0, Math.min(99, qObj.cubes + delta));
+      return {
+        ...prev,
+        [playerId]: {
+          ...playerObj,
+          quarry: { ...qObj, cubes: nextCubes },
+        },
+      };
+    });
+  };
+
+  // 채석큐브 개수 직접 숫자 입력 설정
+  const setCubesDirect = (playerId, rawValue) => {
+    const nextCubes = parseNumericInput(rawValue);
+    setScoresData((prev) => {
+      const playerObj = prev[playerId] || {};
+      const qObj = playerObj.quarry || { cubes: 0, athenaAchieved: false };
+      return {
+        ...prev,
+        [playerId]: {
+          ...playerObj,
+          quarry: { ...qObj, cubes: nextCubes },
+        },
+      };
+    });
+  };
+
+  // 플레이어별 아테나 달성 여부 토글
+  const toggleAthenaAchieved = (playerId) => {
+    setScoresData((prev) => {
+      const playerObj = prev[playerId] || {};
+      const qObj = playerObj.quarry || { cubes: 0, athenaAchieved: false };
+      return {
+        ...prev,
+        [playerId]: {
+          ...playerObj,
+          quarry: { ...qObj, athenaAchieved: !qObj.athenaAchieved },
+        },
+      };
+    });
+  };
+
+  // 개별 플레이어의 특정 챕터 점수 계산 함수
+  const getChapterScore = (playerId, chapterKey) => {
+    const pData = scoresData[playerId];
+    if (!pData) return 0;
+    if (chapterKey === 'quarry') {
+      const cubes = pData.quarry?.cubes || 0;
+      const achieved = isAthena && Boolean(pData.quarry?.athenaAchieved);
+      const multiplier = achieved ? 5 : 1;
+      return cubes * multiplier;
+    }
+    const ch = pData[chapterKey] || { stars: 0, tiles: 0 };
+    if (ch.stars === 0) return 0;
+    return ch.stars * ch.tiles;
+  };
+
+  // 개별 플레이어 총합 점수 계산
+  const getTotalScore = (playerId) => {
+    return chapters.reduce((sum, ch) => sum + getChapterScore(playerId, ch.key), 0);
+  };
+
+  // 최종 순위 계산 (동점자 처리 포함)
+  const rankedResults = useMemo(() => {
+    const list = activeParticipants.map((p) => {
+      const breakdown = {};
+      chapters.forEach((ch) => {
+        breakdown[ch.key] = getChapterScore(p.id, ch.key);
+      });
+      const total = Object.values(breakdown).reduce((a, b) => a + b, 0);
+      const athenaAchieved = isAthena && Boolean(scoresData[p.id]?.quarry?.athenaAchieved);
+      return {
+        ...p,
+        breakdown,
+        total,
+        athenaAchieved,
+      };
+    });
+
+    // 내림차순 정렬
+    list.sort((a, b) => b.total - a.total);
+
+    // 순위 부여 (동점일 경우 같은 순위)
+    let currentRank = 1;
+    return list.map((item, idx) => {
+      if (idx > 0 && item.total < list[idx - 1].total) {
+        currentRank = idx + 1;
+      }
+      return {
+        ...item,
+        rank: currentRank,
+      };
+    });
+  }, [activeParticipants, scoresData, chapters, isAthena]);
+
+  // 카카오톡 공유용 결과 텍스트 생성 및 클립보드 복사
+  const handleCopyResults = async () => {
+    const modeLabel =
+      playerCount === 1
+        ? '1인 솔로 모드 (vs 저명 건축가)'
+        : `${playerCount}인 건축 대전`;
+    const expansionLabel = isAthena
+      ? '적용 (달성 체크 시 개당 5점 / 미달성 1점)'
+      : '미적용 (채석큐브 개당 1점)';
+
+    const lines = [
+      `🏛️ [폴리스의 건축가들] 최종 건축 결과 🏛️`,
+      `• 모드: ${modeLabel}`,
+      `• 확장 1 (아테나): ${expansionLabel}`,
+      `━━━━━━━━━━━━━━━━━━`,
     ];
 
-    let steps = [];
-    let playerNames = ["건축가 1", "건축가 2", "건축가 3", "건축가 4"];
-    let players = [];
-    let currentStep = 0;
+    rankedResults.forEach((r) => {
+      const medal =
+        r.rank === 1 ? '🥇' : r.rank === 2 ? '🥈' : r.rank === 3 ? '🥉' : `${r.rank}위`;
+      const athenaTag = isAthena
+        ? r.athenaAchieved
+          ? ' [🏛️아테나 달성 ×5]'
+          : ' [아테나 미달성 ×1]'
+        : '';
+      lines.push(`${medal} ${r.rank}위 : ${r.name}${athenaTag} — 총 ${r.total}점`);
+      lines.push(
+        `   └ 🔵주거 ${r.breakdown.residential} | 🟡시장 ${r.breakdown.market} | 🔴병영 ${r.breakdown.barracks} | 🟣신전 ${r.breakdown.temple} | 🟢정원 ${r.breakdown.garden} | 🪨석재 ${r.breakdown.quarry}`
+      );
+    });
 
-    window.onload = function() {
-        renderPlayerCountButtons();
-        renderPlayerConfigInputs();
-        updateVariantUI();
-    };
+    lines.push(`━━━━━━━━━━━━━━━━━━`);
+    lines.push(`✨ 에게해의 가장 위대한 건축가를 기리며!`);
 
-    function toggleVariant(type) {
-        variants[type] = !variants[type];
-        updateVariantUI();
+    const shareText = lines.join('\n');
+
+    try {
+      await navigator.clipboard.writeText(shareText);
+      triggerCopyToast();
+    } catch (err) {
+      // Fallback textarea copy
+      const textArea = document.createElement('textarea');
+      textArea.value = shareText;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-9999px';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        triggerCopyToast();
+      } catch (e) {
+        console.error('복사 실패:', e);
+      }
+      document.body.removeChild(textArea);
     }
+  };
 
-    function updateVariantUI() {
-        Object.keys(variants).forEach(type => {
-            const card = document.getElementById(`card-var-${type}`);
-            const chk = document.getElementById(`chk-${type}`);
-            if (variants[type]) {
-                card.classList.add('checked');
-                chk.innerText = '✓';
-            } else {
-                card.classList.remove('checked');
-                chk.innerText = '';
-            }
-        });
-    }
+  const triggerCopyToast = () => {
+    setCopiedToast(true);
+    setTimeout(() => {
+      setCopiedToast(false);
+    }, 3200);
+  };
 
-    function toggleMiniCalc() {
-        const panel = document.getElementById('mini-calc-panel');
-        panel.classList.toggle('hidden');
-        document.getElementById('mc-assign-box').classList.add('hidden');
-    }
+  const activeChapterObj = chapters[currentChapter - 1];
 
-    let mcExpression = "0";
-    let lastCalculatedValue = 0;
-
-    function mcAppend(val) {
-        if (mcExpression === "0" && val !== '.') {
-            mcExpression = val;
-        } else {
-            mcExpression += val;
-        }
-        document.getElementById('mc-screen').value = mcExpression;
-        document.getElementById('mc-assign-box').classList.add('hidden');
-    }
-
-    function mcClear() {
-        mcExpression = "0";
-        document.getElementById('mc-screen').value = mcExpression;
-        document.getElementById('mc-assign-box').classList.add('hidden');
-    }
-
-    function mcBack() {
-        if (mcExpression.length > 1) {
-            mcExpression = mcExpression.slice(0, -1);
-        } else {
-            mcExpression = "0";
-        }
-        document.getElementById('mc-screen').value = mcExpression;
-        document.getElementById('mc-assign-box').classList.add('hidden');
-    }
-
-    function mcCalculate() {
-        try {
-            let result = eval(mcExpression);
-            if (isFinite(result)) {
-                lastCalculatedValue = Number(result);
-                mcExpression = String(result);
-                document.getElementById('mc-screen').value = mcExpression;
-                showAssignBox(lastCalculatedValue);
-            } else {
-                document.getElementById('mc-screen').value = "오류";
-                mcExpression = "0";
-                document.getElementById('mc-assign-box').classList.add('hidden');
-            }
-        } catch (e) {
-            document.getElementById('mc-screen').value = "오류";
-            mcExpression = "0";
-            document.getElementById('mc-assign-box').classList.add('hidden');
-        }
-    }
-
-    function showAssignBox(val) {
-        const assignBox = document.getElementById('mc-assign-box');
-        const resultText = document.getElementById('mc-result-text');
-        const targetButtons = document.getElementById('mc-target-buttons');
+  return (
+    <div className="min-h-screen flex flex-col bg-[#FAF6EE] text-stone-800 relative overflow-x-hidden selection:bg-amber-200 selection:text-amber-950 font-sans pb-[env(safe-area-inset-bottom)]">
+      {/* 폰트 및 미세 애니메이션 스타일 */}
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Noto+Sans+KR:wght@400;500;600;700;800&family=Noto+Serif+KR:wght@600;700;900&display=swap');
         
-        resultText.innerText = `결과값 [ ${val} ] 을(를) 적용할 건축가 선택`;
-        targetButtons.innerHTML = '';
-
-        saveCurrentScores();
-
-        players.forEach((p, idx) => {
-            const btn = document.createElement('button');
-            btn.className = 'mc-target-btn';
-            btn.innerHTML = `<span>${p.name}</span>`;
-            btn.onclick = () => assignValueToPlayer(idx, val);
-            targetButtons.appendChild(btn);
-        });
-
-        assignBox.classList.remove('hidden');
-    }
-
-    function assignValueToPlayer(pIdx, val) {
-        players[pIdx].scores[currentStep] = val;
-        renderScoreInputs();
-        renderLiveScoreBar();
-        document.getElementById('mini-calc-panel').classList.add('hidden');
-        mcClear();
-    }
-
-    function renderPlayerCountButtons() {
-        const container = document.getElementById('player-count-buttons');
-        container.innerHTML = '';
-        for (let i = 2; i <= 4; i++) {
-            const btn = document.createElement('button');
-            btn.className = `pc-btn ${i === playerCount ? 'active' : ''}`;
-            btn.innerText = `${i}명`;
-            btn.onclick = () => {
-                saveConfigInputs();
-                playerCount = i;
-                renderPlayerCountButtons();
-                renderPlayerConfigInputs();
-            };
-            container.appendChild(btn);
+        .font-serif-kr {
+          font-family: 'Noto Serif KR', Georgia, serif;
         }
-    }
+        .font-cinzel {
+          font-family: 'Cinzel', 'Noto Serif KR', serif;
+        }
+        body {
+          font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+          -webkit-tap-highlight-color: transparent;
+        }
+        @keyframes floatSlow {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          50% { transform: translateY(-6px) rotate(1.5deg); }
+        }
+        @keyframes stoneSlideUp {
+          0% { opacity: 0; transform: translateY(14px) scale(0.98); }
+          100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .animate-stone-enter {
+          animation: stoneSlideUp 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+        .animate-float-slow {
+          animation: floatSlow 4.5s ease-in-out infinite;
+        }
+      `}</style>
 
-    function renderPlayerConfigInputs() {
-        saveConfigInputs();
-        const container = document.getElementById('player-config-list');
-        container.innerHTML = '';
-        for (let i = 0; i < playerCount; i++) {
-            if (!playerNames[i]) playerNames[i] = `건축가 ${i + 1}`;
+      {/* 상단 에게해 황금빛 일출 & 지중해 헤더 배너 */}
+      <header className="relative bg-gradient-to-b from-[#1B4965] via-[#27668C] to-[#E8B86D] text-white pt-4 pb-6 sm:pt-5 sm:pb-7 px-3 sm:px-4 shadow-lg border-b-4 border-amber-500/80 overflow-hidden shrink-0">
+        {/* 황금 태양 광채 */}
+        <div className="absolute -bottom-16 left-1/2 -translate-x-1/2 w-64 sm:w-72 h-64 sm:h-72 rounded-full bg-gradient-to-t from-amber-200 via-yellow-100/70 to-transparent blur-xl pointer-events-none opacity-80" />
 
-            const row = document.createElement('div');
-            row.className = 'config-row';
+        {/* 배경 갈매기 실루엣 장식 */}
+        <svg
+          viewBox="0 0 120 40"
+          className="absolute top-3 right-4 sm:top-4 sm:right-8 w-20 sm:w-24 h-7 sm:h-8 text-white/30 animate-float-slow pointer-events-none"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
+          <path d="M10 25 Q22 12 34 22 Q46 12 58 25" strokeLinecap="round" />
+          <path d="M72 15 Q80 6 88 13 Q96 6 104 15" strokeLinecap="round" />
+        </svg>
 
-            row.innerHTML = `
-                <div class="config-input-wrapper">
-                    <input type="text" class="config-input" id="p-name-${i}" value="${playerNames[i]}" placeholder="플레이어 이름" onfocus="this.select()">
+        <div className="max-w-3xl mx-auto relative z-10 flex items-center justify-between gap-2">
+          {/* 좌측 화로 */}
+          <div className="hidden sm:block">
+            <BrazierTorch />
+          </div>
+
+          <div className="text-center flex-1">
+            <div className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-0.5 rounded-full bg-white/15 backdrop-blur-sm border border-white/25 text-amber-100 text-[11px] sm:text-xs font-semibold tracking-wider mb-1.5">
+              <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-300" />
+              <span>AKROPOLIS · SCORE ARCHITECT</span>
+            </div>
+            <h1 className="font-serif-kr text-2xl sm:text-4xl font-black tracking-tight text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.45)]">
+              폴리스의 건축가들
+            </h1>
+            <p className="text-[11px] sm:text-sm text-amber-50/95 font-medium mt-1 drop-shadow">
+              지중해의 햇살 아래 위대한 도시를 세우는 점수 자동 계산기
+            </p>
+          </div>
+
+          {/* 우측 화로 */}
+          <div className="hidden sm:block">
+            <BrazierTorch />
+          </div>
+        </div>
+      </header>
+
+      {/* 메인 컨테이너 (좌우 고대 그리스 도리아식 기둥 프레임) */}
+      <div className="flex-1 w-full max-w-4xl mx-auto flex justify-center relative px-2.5 sm:px-4 py-4 sm:py-8">
+        {/* 좌측 도리아 기둥 (태블릿 이상 노출) */}
+        <div className="hidden md:flex flex-col justify-between py-2 mr-2 shrink-0">
+          <DoricColumn side="left" />
+        </div>
+
+        {/* 중앙 대리석 건축 보드 */}
+        <main className="w-full max-w-2xl z-10 min-w-0">
+          {/* =========================================================
+              1. 게임 설정 화면 (SETUP SCREEN)
+          ========================================================= */}
+          {screen === 'setup' && (
+            <div className="animate-stone-enter bg-[#FFFDF9] rounded-2xl shadow-[0_10px_30px_rgba(120,90,40,0.12)] border-2 border-[#E2D6C1] overflow-hidden">
+              {/* 상단 대리석 프리즈 장식 */}
+              <div className="bg-gradient-to-r from-[#F3ECE0] via-[#FAF6EE] to-[#F3ECE0] px-4 sm:px-5 py-3.5 sm:py-4 border-b border-[#E2D6C1] flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-9 h-9 rounded-xl bg-[#1B4965] text-amber-300 flex items-center justify-center shadow-sm shrink-0">
+                    <Landmark className="w-5 h-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <h2 className="font-serif-kr text-base sm:text-xl font-bold text-stone-800 truncate">
+                      건축 설계 및 인원 설정
+                    </h2>
+                    <p className="text-[11px] sm:text-xs text-stone-500 truncate">
+                      참여 인원과 확장판 적용 여부를 선택하세요
+                    </p>
+                  </div>
                 </div>
-            `;
-            container.appendChild(row);
-        }
-    }
+                <span className="font-cinzel text-[11px] sm:text-xs font-bold text-amber-700 bg-amber-100/80 px-2 sm:px-2.5 py-1 rounded-md border border-amber-300 shrink-0">
+                  STEP 01
+                </span>
+              </div>
 
-    function saveConfigInputs() {
-        for (let i = 0; i < playerCount; i++) {
-            const input = document.getElementById(`p-name-${i}`);
-            if (input) playerNames[i] = input.value || `건축가 ${i + 1}`;
-        }
-    }
-
-    function startCalculator() {
-        saveConfigInputs();
-        steps = JSON.parse(JSON.stringify(baseSteps));
-
-        players = [];
-        for (let i = 0; i < playerCount; i++) {
-            players.push({
-                name: playerNames[i],
-                scores: new Array(steps.length).fill(0),
-                rawData: {
-                    stones: 0
-                }
-            });
-        }
-        currentStep = 0;
-        document.getElementById('setup-screen').classList.add('hidden');
-        document.getElementById('calculator-screen').classList.remove('hidden');
-        renderStep();
-    }
-
-    function renderStep() {
-        const progressPercent = ((currentStep + 1) / steps.length) * 100;
-        document.getElementById('progress-bar-fill').style.width = `${progressPercent}%`;
-
-        document.getElementById('step-counter').innerText = `STEP ${currentStep + 1} / ${steps.length}`;
-        document.getElementById('step-title').innerText = steps[currentStep].title;
-        document.getElementById('step-desc').innerText = steps[currentStep].desc;
-        document.getElementById('next-btn').innerText = (currentStep === steps.length - 1) ? "최종 결과 보기" : "다음 단계";
-
-        document.getElementById('mini-calc-panel').classList.add('hidden');
-        mcClear();
-
-        renderLiveScoreBar();
-        renderScoreInputs();
-    }
-
-    function renderLiveScoreBar() {
-        const bar = document.getElementById('live-score-bar');
-        bar.innerHTML = '';
-        players.forEach(p => {
-            const total = p.scores.reduce((a, b) => a + b, 0);
-            const item = document.createElement('div');
-            item.className = 'live-score-item';
-            item.innerHTML = `<span>${p.name}: ${total}점</span>`;
-            bar.appendChild(item);
-        });
-    }
-
-    function renderScoreInputs() {
-        const container = document.getElementById('player-score-inputs');
-        container.innerHTML = '';
-
-        players.forEach((p, index) => {
-            const card = document.createElement('div');
-            card.className = 'player-score-card';
-
-            let innerHtml = `
-                <div class="player-info-area">
-                    <div class="player-card-name">${p.name}</div>
+              <div className="p-4 sm:p-7 space-y-5 sm:space-y-6">
+                {/* 인원수 선택 (1~4인) */}
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-bold text-stone-700 mb-2.5 sm:mb-3">
+                    <Users className="w-4 h-4 text-[#1B4965]" />
+                    <span>참여 인원수 선택</span>
+                  </label>
+                  <div className="grid grid-cols-4 gap-2 sm:gap-3">
+                    {[1, 2, 3, 4].map((num) => {
+                      const active = playerCount === num;
+                      return (
+                        <button
+                          key={num}
+                          type="button"
+                          onClick={() => handleSelectPlayerCount(num)}
+                          className={`relative min-h-[64px] sm:min-h-[72px] py-3 px-1.5 sm:px-2 rounded-xl border-2 font-bold transition-all duration-200 flex flex-col items-center justify-center gap-0.5 sm:gap-1 cursor-pointer touch-manipulation ${
+                            active
+                              ? 'bg-[#1B4965] border-[#1B4965] text-white shadow-md -translate-y-0.5'
+                              : 'bg-[#FAF6EE] border-[#DFD3BE] text-stone-700 hover:border-amber-400 hover:bg-amber-50/50'
+                          }`}
+                        >
+                          <span className="text-base sm:text-xl font-extrabold">{num}인</span>
+                          <span
+                            className={`text-[10px] sm:text-[11px] font-medium leading-tight ${
+                              active ? 'text-amber-200' : 'text-stone-400'
+                            }`}
+                          >
+                            {num === 1 ? '솔로 대전' : `${num}명`}
+                          </span>
+                          {active && (
+                            <span className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-amber-400 text-stone-900 flex items-center justify-center shadow">
+                              <Check className="w-3 h-3 stroke-[3]" />
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-                <div class="stepper-controls">
-                    <button class="step-btn" onclick="adjustScore(${index}, -1)">-</button>
-                    <input type="number" class="score-input" id="score-input-${index}" value="${p.scores[currentStep]}" onfocus="this.select()" onchange="updateScoreValue(${index}, this.value)">
-                    <button class="step-btn" onclick="adjustScore(${index}, 1)">+</button>
-                </div>
-            `;
 
-            card.innerHTML = innerHtml;
-            container.appendChild(card);
-        });
-    }
-
-    function adjustScore(pIdx, amt) {
-        players[pIdx].scores[currentStep] = Math.max(0, players[pIdx].scores[currentStep] + amt);
-        document.getElementById(`score-input-${pIdx}`).value = players[pIdx].scores[currentStep];
-        renderLiveScoreBar();
-    }
-
-    function updateScoreValue(pIdx, val) {
-        const num = parseInt(val);
-        players[pIdx].scores[currentStep] = isNaN(num) ? 0 : Math.max(0, num);
-        renderLiveScoreBar();
-    }
-
-    function saveCurrentScores() {
-        players.forEach((p, idx) => {
-            const input = document.getElementById(`score-input-${idx}`);
-            if (input) {
-                let val = parseInt(input.value) || 0;
-                p.scores[currentStep] = Math.max(0, val);
-                if (steps[currentStep].id === 'stones') {
-                    p.rawData.stones = val;
-                }
-            }
-        });
-    }
-
-    function prevStep() {
-        saveCurrentScores();
-        if (currentStep > 0) { currentStep--; renderStep(); }
-        else { document.getElementById('calculator-screen').classList.add('hidden'); document.getElementById('setup-screen').classList.remove('hidden'); }
-    }
-
-    function nextStep() {
-        saveCurrentScores();
-        if (currentStep < steps.length - 1) { currentStep++; renderStep(); }
-        else { showResult(); }
-    }
-
-    function goToEditSteps() {
-        document.getElementById('result-screen').classList.add('hidden');
-        document.getElementById('calculator-screen').classList.remove('hidden');
-        currentStep = 0;
-        renderStep();
-    }
-
-    function showResult() {
-        document.getElementById('calculator-screen').classList.add('hidden');
-        document.getElementById('result-screen').classList.remove('hidden');
-        if (typeof confetti === 'function') confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
-
-        let ranked = players.map(p => {
-            let total = p.scores.reduce((a, b) => a + b, 0);
-            let stones = p.rawData.stones;
-            return { ...p, total, stones };
-        });
-
-        // 동점 시 남은 석재가 더 많은 건축가 우선[span_26](start_span)[span_26](end_span)
-        ranked.sort((a, b) => {
-            if (b.total !== a.total) return b.total - a.total;
-            return b.stones - a.stones;
-        });
-        
-        const winnerNameEl = document.getElementById('winner-name-display');
-        winnerNameEl.innerHTML = `<span>${ranked[0].name}</span>`;
-        
-        document.getElementById('winner-score-display').innerText = `${ranked[0].total}점`;
-        document.getElementById('winner-flavor-text').innerText = "“가장 눈부신 아크로폴리스를 건설하여 폴리스 역사에 영원히 이름을 남겼습니다!”";
-
-        const mvpContainer = document.getElementById('mvp-cards-container');
-        mvpContainer.innerHTML = '';
-
-        steps.forEach((step, sIdx) => {
-            let scoresList = players.map(p => ({ name: p.name, score: p.scores[sIdx] }));
-            scoresList.sort((a, b) => b.score - a.score);
-
-            let topPlayerName = "";
-            let topScore = -999999;
-
-            if (scoresList.length > 0) {
-                if (scoresList.length === 1 || scoresList[0].score > scoresList[1].score) {
-                    topPlayerName = scoresList[0].name;
-                    topScore = scoresList[0].score;
-                }
-            }
-
-            if (topPlayerName !== "") {
-                const mvpCard = document.createElement('div');
-                mvpCard.className = 'mvp-card';
-                mvpCard.innerHTML = `
-                    <div>
-                        <div style="font-size:10px; color:var(--accent-color); font-weight:800; margin-bottom:2px;">[${step.awardName}]</div>
-                        <div style="font-size:12px; font-weight:700; color:var(--text-main);">${step.title} 1위: <span style="color:var(--accent-color); font-weight:800;">${topPlayerName}</span> (${topScore}점)</div>
-                        <div style="font-size:10px; color:var(--text-sub); margin-top:2px;">${step.flavor}</div>
+                {/* 확장 1: 아테나 선택 토글 */}
+                <div
+                  onClick={() => setIsAthena((prev) => !prev)}
+                  role="switch"
+                  aria-checked={isAthena}
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setIsAthena((prev) => !prev);
+                    }
+                  }}
+                  className={`cursor-pointer touch-manipulation rounded-xl p-3.5 sm:p-4 border-2 transition-all duration-200 flex items-center justify-between gap-3 sm:gap-4 ${
+                    isAthena
+                      ? 'bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-100/70 border-amber-500 shadow-sm'
+                      : 'bg-[#FAF6EE] border-[#DFD3BE] hover:border-amber-300'
+                  }`}
+                >
+                  <div className="flex items-start gap-2.5 sm:gap-3 min-w-0">
+                    <div
+                      className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
+                        isAthena
+                          ? 'bg-amber-500 text-white shadow-sm'
+                          : 'bg-stone-200 text-stone-500'
+                      }`}
+                    >
+                      <Award className="w-5 h-5" />
                     </div>
-                `;
-                mvpContainer.appendChild(mvpCard);
-            }
-        });
-
-        const list = document.getElementById('ranking-list');
-        list.innerHTML = '';
-        ranked.forEach((p, idx) => {
-            const card = document.createElement('div');
-            card.className = 'ranking-card';
-            card.innerHTML = `
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <span style="color:var(--accent-color); font-weight:800; font-size:14px;">${idx + 1}위</span>
-                        <span style="font-weight:700; font-size:13px;">${p.name}</span>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                        <span className="font-bold text-stone-800 text-sm sm:text-base">
+                          확장 1. 아테나 (Athena)
+                        </span>
+                        <span
+                          className={`text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded-full ${
+                            isAthena
+                              ? 'bg-amber-600 text-white'
+                              : 'bg-stone-200 text-stone-600'
+                          }`}
+                        >
+                          {isAthena ? '적용됨' : '미적용'}
+                        </span>
+                      </div>
+                      <p className="text-[11px] sm:text-xs text-stone-600 mt-1 leading-relaxed">
+                        선택 시 챕터 6에서 플레이어별{' '}
+                        <strong className="text-amber-800 underline decoration-amber-400">
+                          아테나 달성 체크 시 개당 +5점
+                        </strong>
+                        , 미체크 시 개당 +1점으로 계산됩니다.
+                      </p>
                     </div>
-                    <span style="color:var(--accent-color); font-weight:800; font-size:14px;">${p.total}점 (석재 ${p.stones}개)</span>
+                  </div>
+
+                  {/* 스위치 UI */}
+                  <div
+                    className={`w-12 sm:w-13 h-7 rounded-full p-1 transition-colors shrink-0 flex items-center ${
+                      isAthena ? 'bg-amber-500 justify-end' : 'bg-stone-300 justify-start'
+                    }`}
+                  >
+                    <div className="w-5 h-5 rounded-full bg-white shadow" />
+                  </div>
                 </div>
-            `;
-            list.appendChild(card);
-        });
-    }
 
-    function resetApp() {
-        document.getElementById('result-screen').classList.add('hidden');
-        document.getElementById('calculator-screen').classList.add('hidden');
-        document.getElementById('setup-screen').classList.remove('hidden');
-        currentStep = 0;
-        renderPlayerCountButtons();
-        renderPlayerConfigInputs();
-        updateVariantUI();
-    }
+                {/* 플레이어 이름 수정 칸 */}
+                <div>
+                  <label className="flex items-center justify-between text-sm font-bold text-stone-700 mb-2.5 sm:mb-3">
+                    <span className="flex items-center gap-2">
+                      <ScrollText className="w-4 h-4 text-[#9E2A2B]" />
+                      <span>건축가(플레이어) 이름 설정</span>
+                    </span>
+                    <span className="text-[11px] sm:text-xs font-normal text-stone-400">
+                      터치하여 이름 수정
+                    </span>
+                  </label>
 
-    function fullResetApp() {
-        if (confirm("모든 설정과 건축가 기록이 초기화됩니다. 진행하시겠습니까?")) {
-            playerCount = 4;
-            variants = { residential: false, market: false, barracks: false, temple: false, garden: false };
-            playerNames = ["건축가 1", "건축가 2", "건축가 3", "건축가 4"];
-            players = [];
-            currentStep = 0;
-            resetApp();
-        }
-    }
-</script>
+                  <div className="space-y-2.5">
+                    {Array.from({ length: playerCount }).map((_, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-center gap-2.5 sm:gap-3 bg-[#FAF6EE] border border-[#DFD3BE] focus-within:border-[#1B4965] focus-within:ring-2 focus-within:ring-[#1B4965]/15 rounded-xl px-3 sm:px-3.5 py-2.5 min-h-[48px] transition-all"
+                      >
+                        <span className="w-7 h-7 rounded-lg bg-[#1B4965] text-white text-xs font-extrabold flex items-center justify-center shrink-0">
+                          {idx + 1}P
+                        </span>
+                        <input
+                          type="text"
+                          value={playerNames[idx]}
+                          onChange={(e) => handleNameChange(idx, e.target.value)}
+                          onFocus={handleSelectAllOnFocus}
+                          onClick={handleSelectAllOnFocus}
+                          placeholder={`플레이어 ${idx + 1} 이름 입력`}
+                          maxLength={14}
+                          className="w-full min-w-0 bg-transparent text-stone-800 font-bold text-base focus:outline-none placeholder:text-stone-400 selection:bg-amber-300 selection:text-stone-900"
+                        />
+                        <span className="text-[11px] sm:text-xs text-stone-500 bg-stone-200/60 px-2 py-0.5 rounded shrink-0">
+                          석재 {idx + 1}개
+                        </span>
+                      </div>
+                    ))}
 
-</body>
-</html>
+                    {/* 1인 모드일 경우 가상 라이벌 '저명 건축가' 카드 표시 */}
+                    {playerCount === 1 && (
+                      <div className="flex items-center gap-2.5 sm:gap-3 bg-amber-50/90 border border-amber-300 rounded-xl px-3 sm:px-3.5 py-2.5 min-h-[48px]">
+                        <span className="w-7 h-7 rounded-lg bg-[#9E2A2B] text-amber-200 text-xs font-extrabold flex items-center justify-center shrink-0">
+                          AI
+                        </span>
+                        <div className="flex-1 flex items-center justify-between gap-2 min-w-0">
+                          <span className="font-bold text-stone-800 text-sm sm:text-base truncate">
+                            저명 건축가
+                          </span>
+                          <span className="text-[10px] sm:text-xs font-semibold text-amber-800 bg-amber-200/70 px-2 py-0.5 rounded-md shrink-0">
+                            가상 상대 · 석재 2개
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* 게임 시작 버튼 (모바일 터치 영역 52px 이상) */}
+                <button
+                  type="button"
+                  onClick={handleOpenStartModal}
+                  className="w-full min-h-[54px] py-3.5 sm:py-4 px-5 sm:px-6 rounded-xl bg-gradient-to-r from-[#9E2A2B] via-[#B83233] to-[#9E2A2B] hover:from-[#852122] hover:to-[#852122] text-white font-serif-kr font-bold text-base sm:text-lg shadow-[0_6px_20px_rgba(158,42,43,0.35)] hover:shadow-[0_8px_24px_rgba(158,42,43,0.45)] active:scale-[0.99] transition-all flex items-center justify-center gap-2.5 cursor-pointer touch-manipulation"
+                >
+                  <Flame className="w-5 h-5 text-amber-300 shrink-0" />
+                  <span>게임 시작하기</span>
+                  <ChevronRight className="w-5 h-5 shrink-0" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* =========================================================
+              2. 챕터별 점수 계산 화면 (SCORING FLOW)
+          ========================================================= */}
+          {screen === 'scoring' && activeChapterObj && (
+            <div className="space-y-3.5 sm:space-y-4 animate-stone-enter">
+              {/* 상단 아크로폴리스 건축 진행도 & 챕터 네비게이션 */}
+              <div className="bg-[#FFFDF9] rounded-2xl p-3.5 sm:p-5 border-2 border-[#E2D6C1] shadow-sm">
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <button
+                    type="button"
+                    onClick={() => setScreen('setup')}
+                    className="min-h-[36px] text-xs font-semibold text-stone-500 hover:text-stone-800 flex items-center gap-1 px-2.5 py-1.5 rounded-lg hover:bg-stone-100 transition-colors cursor-pointer touch-manipulation"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    <span>설정으로</span>
+                  </button>
+
+                  <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                    {isAthena && (
+                      <span className="text-[10px] sm:text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-300 px-2 py-0.5 rounded-full">
+                        아테나 ON (달성 시 ×5)
+                      </span>
+                    )}
+                    <span className="font-cinzel text-[11px] sm:text-xs font-bold text-[#1B4965] bg-sky-50 border border-sky-200 px-2.5 py-0.5 rounded-full">
+                      CH {currentChapter} / 6
+                    </span>
+                  </div>
+                </div>
+
+                {/* 살아있는 신전 건축 진행 일러스트 */}
+                <AcropolisProgressBuilder
+                  currentChapter={currentChapter}
+                  isAthena={isAthena}
+                />
+
+                {/* 챕터 빠른 이동 탭 (1~6, 모바일 터치 높이 확보) */}
+                <div className="grid grid-cols-6 gap-1 sm:gap-1.5 mt-3">
+                  {chapters.map((ch) => {
+                    const isCurrent = ch.id === currentChapter;
+                    const isDone = ch.id < currentChapter;
+                    return (
+                      <button
+                        key={ch.id}
+                        type="button"
+                        onClick={() => setCurrentChapter(ch.id)}
+                        className={`min-h-[44px] py-1.5 px-0.5 sm:px-1 rounded-xl border text-center transition-all cursor-pointer touch-manipulation flex flex-col items-center justify-center gap-0.5 ${
+                          isCurrent
+                            ? 'bg-stone-800 text-white border-stone-800 shadow-sm scale-[1.03]'
+                            : isDone
+                            ? 'bg-[#F3ECE0] text-stone-700 border-[#D5C6AE] hover:bg-amber-50'
+                            : 'bg-white text-stone-400 border-stone-200 hover:border-stone-300'
+                        }`}
+                      >
+                        <span
+                          className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full"
+                          style={{ backgroundColor: ch.themeHex }}
+                        />
+                        <span className="text-[10px] sm:text-[11px] font-bold truncate max-w-full">
+                          {ch.id === 6 ? '석재' : ch.name}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 현재 챕터 구역 조건 배너 카드 */}
+              <div
+                className={`rounded-2xl p-3.5 sm:p-5 border-2 shadow-sm transition-colors duration-300 ${activeChapterObj.bgLight} ${activeChapterObj.borderLight}`}
+              >
+                <div className="flex items-start gap-3 sm:gap-3.5">
+                  <div
+                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl text-white flex items-center justify-center shadow-md shrink-0"
+                    style={{ backgroundColor: activeChapterObj.themeHex }}
+                  >
+                    <ChapterIcon type={activeChapterObj.iconType} className="w-5 h-5 sm:w-6 sm:h-6" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                      <span
+                        className="text-[11px] sm:text-xs font-extrabold text-white px-2 sm:px-2.5 py-0.5 rounded-full"
+                        style={{ backgroundColor: activeChapterObj.themeHex }}
+                      >
+                        챕터 {activeChapterObj.id} · {activeChapterObj.colorName}
+                      </span>
+                      <span className="font-cinzel text-[10px] sm:text-xs font-bold tracking-wider opacity-60">
+                        {activeChapterObj.engName}
+                      </span>
+                    </div>
+                    <h2
+                      className={`font-serif-kr text-lg sm:text-2xl font-black mt-1 leading-snug ${activeChapterObj.textMain}`}
+                    >
+                      {activeChapterObj.name} — {activeChapterObj.ruleTitle}
+                    </h2>
+                    <p className="text-xs sm:text-sm text-stone-700 mt-1 leading-relaxed">
+                      {activeChapterObj.ruleDesc}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* 플레이어별 점수 입력 카드 목록 */}
+              <div className="space-y-3 sm:space-y-3.5">
+                {activeParticipants.map((player) => {
+                  const isQuarry = activeChapterObj.id === 6;
+                  const pData = scoresData[player.id] || {};
+                  const chData = pData[activeChapterObj.key] || { stars: 0, tiles: 0 };
+                  const cubesCount = pData.quarry?.cubes || 0;
+                  const isPlayerAthenaAchieved =
+                    isAthena && Boolean(pData.quarry?.athenaAchieved);
+                  const cubeMultiplier = isPlayerAthenaAchieved ? 5 : 1;
+
+                  // 별 개수가 0이면 해당 챕터 흑백 처리 및 점수 등록 잠금
+                  const isLockedByZeroStars = !isQuarry && chData.stars === 0;
+                  const chapterPoints = getChapterScore(player.id, activeChapterObj.key);
+                  const runningTotal = getTotalScore(player.id);
+
+                  return (
+                    <div
+                      key={player.id}
+                      className={`rounded-2xl border-2 p-3.5 sm:p-5 transition-all duration-300 ${
+                        isLockedByZeroStars
+                          ? 'grayscale bg-stone-200/85 border-stone-300 text-stone-500 opacity-85'
+                          : 'bg-[#FFFDF9] border-[#DFD3BE] shadow-[0_6px_18px_rgba(90,70,40,0.08)]'
+                      }`}
+                    >
+                      {/* 카드 상단: 플레이어 이름 & 현재 챕터 획득 점수 */}
+                      <div className="flex items-center justify-between gap-2 pb-2.5 sm:pb-3 mb-3 sm:mb-3.5 border-b border-stone-200/80">
+                        <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+                          <div
+                            className="w-8 h-8 rounded-xl text-white font-extrabold text-xs flex items-center justify-center shadow-sm shrink-0"
+                            style={{
+                              backgroundColor: isLockedByZeroStars
+                                ? '#78716C'
+                                : activeChapterObj.themeHex,
+                            }}
+                          >
+                            {player.isRival ? 'AI' : `${player.id + 1}P`}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="font-bold text-base sm:text-lg text-stone-800 truncate">
+                                {player.name}
+                              </span>
+                              {player.isRival && (
+                                <span className="text-[10px] sm:text-[11px] font-bold bg-stone-700 text-amber-200 px-1.5 sm:px-2 py-0.5 rounded shrink-0">
+                                  저명 건축가
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-xs text-stone-500 block">
+                              현재 누적 총점: <strong className="text-stone-700">{runningTotal}점</strong>
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* 실시간 계산된 챕터 점수 뱃지 */}
+                        <div className="text-right shrink-0">
+                          <div
+                            className={`inline-flex items-baseline gap-0.5 sm:gap-1 px-3 sm:px-3.5 py-1.5 rounded-xl font-black text-base sm:text-xl transition-transform ${
+                              isLockedByZeroStars
+                                ? 'bg-stone-300 text-stone-600'
+                                : 'bg-amber-100/90 text-amber-950 border border-amber-300'
+                            }`}
+                          >
+                            <span>+{chapterPoints}</span>
+                            <span className="text-xs font-bold">점</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 입력 컨트롤 영역 */}
+                      {isQuarry ? (
+                        /* 챕터 6: 채석큐브 입력 (기본 +1점 / 아테나 확장 달성 체크 시 +5점) */
+                        <div className="space-y-2.5">
+                          {/* 확장 1. 아테나 선택 시 플레이어별 달성 체크 칸 */}
+                          {isAthena && (
+                            <button
+                              type="button"
+                              role="checkbox"
+                              aria-checked={isPlayerAthenaAchieved}
+                              onClick={() => toggleAthenaAchieved(player.id)}
+                              className={`w-full min-h-[50px] p-3 sm:p-3.5 rounded-xl border-2 transition-all flex items-center justify-between gap-2.5 text-left cursor-pointer touch-manipulation ${
+                                isPlayerAthenaAchieved
+                                  ? 'bg-gradient-to-r from-amber-100 via-yellow-50 to-amber-100 border-amber-500 shadow-xs'
+                                  : 'bg-white border-stone-300 hover:border-amber-400'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <div
+                                  className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 transition-colors ${
+                                    isPlayerAthenaAchieved
+                                      ? 'bg-amber-500 border-amber-600 text-white'
+                                      : 'bg-stone-50 border-stone-400 text-transparent'
+                                  }`}
+                                >
+                                  <Check className="w-4 h-4 stroke-[3]" />
+                                </div>
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                    <Award
+                                      className={`w-4 h-4 shrink-0 ${
+                                        isPlayerAthenaAchieved
+                                          ? 'text-amber-600'
+                                          : 'text-stone-400'
+                                      }`}
+                                    />
+                                    <span
+                                      className={`font-extrabold text-xs sm:text-sm ${
+                                        isPlayerAthenaAchieved
+                                          ? 'text-amber-950'
+                                          : 'text-stone-700'
+                                      }`}
+                                    >
+                                      아테나 달성 체크
+                                    </span>
+                                  </div>
+                                  <p className="text-[11px] text-stone-500 mt-0.5 truncate">
+                                    {isPlayerAthenaAchieved
+                                      ? '달성 완료! 채석큐브 개당 +5점 적용 중'
+                                      : '터치하여 체크 시 개당 +5점으로 변경'}
+                                  </p>
+                                </div>
+                              </div>
+
+                              <span
+                                className={`text-xs font-black px-2.5 py-1 rounded-lg shrink-0 ${
+                                  isPlayerAthenaAchieved
+                                    ? 'bg-amber-600 text-white shadow-xs'
+                                    : 'bg-stone-200 text-stone-700'
+                                }`}
+                              >
+                                {isPlayerAthenaAchieved ? '+5점/개' : '+1점/개'}
+                              </span>
+                            </button>
+                          )}
+
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-stone-100/80 p-3 sm:p-3.5 rounded-xl border border-stone-200">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <Box className="w-4 h-4 text-stone-700" />
+                                <span className="font-bold text-sm text-stone-800">
+                                  보유 채석큐브(석재) 개수
+                                </span>
+                              </div>
+                              <p className="text-xs text-stone-500 mt-0.5">
+                                {isAthena ? (
+                                  isPlayerAthenaAchieved ? (
+                                    <span className="text-amber-800 font-bold">
+                                      ✨ 아테나 달성 적용: 큐브 1개당 × 5점
+                                    </span>
+                                  ) : (
+                                    <span>아테나 미달성: 큐브 1개당 × 1점</span>
+                                  )
+                                ) : (
+                                  <span>기본 규칙: 큐브 1개당 × 1점</span>
+                                )}
+                              </p>
+                            </div>
+
+                            <div className="flex items-center justify-between sm:justify-end gap-3">
+                              <div className="flex items-center gap-1.5 bg-white p-1 rounded-xl border border-stone-300 shadow-inner">
+                                <button
+                                  type="button"
+                                  onClick={() => updateCubes(player.id, -1)}
+                                  className="w-11 h-11 rounded-lg bg-stone-100 hover:bg-stone-200 active:scale-95 font-black text-lg text-stone-700 flex items-center justify-center cursor-pointer touch-manipulation"
+                                  aria-label="채석큐브 감소"
+                                >
+                                  -
+                                </button>
+                                <input
+                                  type="text"
+                                  inputMode="numeric"
+                                  pattern="[0-9]*"
+                                  value={cubesCount}
+                                  onFocus={handleSelectAllOnFocus}
+                                  onClick={handleSelectAllOnFocus}
+                                  onChange={(e) => setCubesDirect(player.id, e.target.value)}
+                                  aria-label={`${player.name} 채석큐브 직접 입력`}
+                                  className="w-12 h-11 text-center font-black text-xl text-stone-800 bg-stone-50/70 hover:bg-stone-100 focus:bg-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-400 rounded-lg transition-colors selection:bg-amber-300 selection:text-stone-900"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => updateCubes(player.id, 1)}
+                                  className="w-11 h-11 rounded-lg bg-stone-800 hover:bg-stone-700 active:scale-95 font-black text-lg text-white flex items-center justify-center cursor-pointer touch-manipulation"
+                                  aria-label="채석큐브 증가"
+                                >
+                                  +
+                                </button>
+                              </div>
+                              <span className="text-xs font-bold text-stone-600 min-w-[74px] text-right">
+                                × {cubeMultiplier}점 = {chapterPoints}점
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        /* 챕터 1~5: 별 개수 × 타일 개수 */
+                        <div className="space-y-2.5 sm:space-y-3">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
+                            {/* 별 개수 (광장 별 아이콘) 조절 */}
+                            <div className="bg-amber-50/70 border border-amber-200/90 rounded-xl p-2.5 sm:p-3 flex items-center justify-between gap-2">
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-1.5 text-amber-900 font-bold text-sm">
+                                  <Star className="w-4 h-4 fill-amber-400 text-amber-500 shrink-0" />
+                                  <span className="truncate">광장 별 개수</span>
+                                </div>
+                                <span className="text-[11px] text-amber-700/80 block truncate">
+                                  별 1개 이상 시 활성화
+                                </span>
+                              </div>
+
+                              <div className="flex items-center gap-1 sm:gap-1.5 bg-white p-1 rounded-xl border border-amber-300 shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    updateStars(player.id, activeChapterObj.key, -1)
+                                  }
+                                  className="w-11 h-11 sm:w-9 sm:h-9 rounded-lg bg-amber-100/70 hover:bg-amber-200 active:scale-95 font-black text-lg sm:text-base text-amber-950 flex items-center justify-center cursor-pointer touch-manipulation"
+                                  aria-label="별 개수 감소"
+                                >
+                                  -
+                                </button>
+                                <input
+                                  type="text"
+                                  inputMode="numeric"
+                                  pattern="[0-9]*"
+                                  value={chData.stars}
+                                  onFocus={handleSelectAllOnFocus}
+                                  onClick={handleSelectAllOnFocus}
+                                  onChange={(e) =>
+                                    setStarsDirect(
+                                      player.id,
+                                      activeChapterObj.key,
+                                      e.target.value
+                                    )
+                                  }
+                                  aria-label={`${player.name} ${activeChapterObj.name} 별 개수 직접 입력`}
+                                  className="w-10 h-11 sm:h-9 text-center font-black text-lg text-amber-950 bg-amber-50/60 hover:bg-amber-100/70 focus:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-400 rounded-lg transition-colors selection:bg-amber-300 selection:text-stone-900"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    updateStars(player.id, activeChapterObj.key, 1)
+                                  }
+                                  className="w-11 h-11 sm:w-9 sm:h-9 rounded-lg bg-amber-500 hover:bg-amber-600 active:scale-95 font-black text-lg sm:text-base text-white flex items-center justify-center cursor-pointer touch-manipulation"
+                                  aria-label="별 개수 증가"
+                                >
+                                  +
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* 조건 충족 타일 개수 조절 (별 0개면 잠금!) */}
+                            <div
+                              className={`rounded-xl p-2.5 sm:p-3 border flex items-center justify-between gap-2 transition-all ${
+                                isLockedByZeroStars
+                                  ? 'bg-stone-300/60 border-stone-400/60'
+                                  : 'bg-white border-stone-200'
+                              }`}
+                            >
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-1.5 font-bold text-sm text-stone-800">
+                                  <Hexagon
+                                    className="w-4 h-4 shrink-0"
+                                    style={{
+                                      color: isLockedByZeroStars
+                                        ? '#78716C'
+                                        : activeChapterObj.themeHex,
+                                    }}
+                                  />
+                                  <span className="truncate">조건 타일 수</span>
+                                </div>
+                                <span className="text-[11px] text-stone-500 block truncate">
+                                  {isLockedByZeroStars
+                                    ? '별 0개 · 입력 잠금됨'
+                                    : '점수 인정 타일 합계'}
+                                </span>
+                              </div>
+
+                              <div className="flex items-center gap-1 sm:gap-1.5 bg-stone-50 p-1 rounded-xl border border-stone-300 shrink-0">
+                                <button
+                                  type="button"
+                                  disabled={isLockedByZeroStars}
+                                  onClick={() =>
+                                    updateTiles(player.id, activeChapterObj.key, -1)
+                                  }
+                                  className="w-11 h-11 sm:w-9 sm:h-9 rounded-lg bg-stone-200 hover:bg-stone-300 disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 font-black text-lg sm:text-base text-stone-800 flex items-center justify-center cursor-pointer touch-manipulation"
+                                  aria-label="타일 개수 감소"
+                                >
+                                  -
+                                </button>
+                                <input
+                                  type="text"
+                                  inputMode="numeric"
+                                  pattern="[0-9]*"
+                                  disabled={isLockedByZeroStars}
+                                  value={isLockedByZeroStars ? 0 : chData.tiles}
+                                  onFocus={handleSelectAllOnFocus}
+                                  onClick={handleSelectAllOnFocus}
+                                  onChange={(e) =>
+                                    setTilesDirect(
+                                      player.id,
+                                      activeChapterObj.key,
+                                      e.target.value
+                                    )
+                                  }
+                                  aria-label={`${player.name} ${activeChapterObj.name} 타일 개수 직접 입력`}
+                                  className="w-10 h-11 sm:h-9 text-center font-black text-lg text-stone-800 bg-white hover:bg-stone-100 focus:bg-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-400 disabled:bg-transparent disabled:text-stone-500 disabled:cursor-not-allowed rounded-lg transition-colors selection:bg-amber-300 selection:text-stone-900"
+                                />
+                                <button
+                                  type="button"
+                                  disabled={isLockedByZeroStars}
+                                  onClick={() =>
+                                    updateTiles(player.id, activeChapterObj.key, 1)
+                                  }
+                                  style={{
+                                    backgroundColor: isLockedByZeroStars
+                                      ? '#A8A29E'
+                                      : activeChapterObj.themeHex,
+                                  }}
+                                  className="w-11 h-11 sm:w-9 sm:h-9 rounded-lg text-white disabled:cursor-not-allowed active:scale-95 font-black text-lg sm:text-base flex items-center justify-center cursor-pointer touch-manipulation"
+                                  aria-label="타일 개수 증가"
+                                >
+                                  +
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* 하단 상태 안내 바 */}
+                          {isLockedByZeroStars ? (
+                            <div className="flex items-center justify-center gap-1.5 sm:gap-2 py-2 px-2.5 sm:px-3 rounded-lg bg-stone-300/80 text-stone-700 text-[11px] sm:text-xs font-bold text-center">
+                              <Lock className="w-3.5 h-3.5 shrink-0" />
+                              <span>
+                                별 개수가 0개이므로 이 챕터 점수를 등록할 수 없습니다 (0점)
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center justify-between px-3 py-1.5 rounded-lg bg-stone-100/80 text-xs text-stone-600">
+                              <span className="flex items-center gap-1 font-medium text-emerald-700">
+                                <Unlock className="w-3.5 h-3.5" />
+                                점수 등록 활성화됨
+                              </span>
+                              <span className="font-bold text-stone-800">
+                                ★ {chData.stars} × ◼ {chData.tiles} = {chapterPoints}점
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* 이전 / 다음 챕터 이동 버튼 (모바일 터치 영역 50px 이상) */}
+              <div className="flex items-center gap-2 sm:gap-3 pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (currentChapter > 1) {
+                      setCurrentChapter((c) => c - 1);
+                    } else {
+                      setScreen('setup');
+                    }
+                  }}
+                  className="flex-1 min-h-[50px] py-3 px-3 sm:px-4 rounded-xl bg-white hover:bg-stone-100 text-stone-700 font-bold text-sm sm:text-base border-2 border-[#D5C6AE] transition-all flex items-center justify-center gap-1 cursor-pointer touch-manipulation"
+                >
+                  <ChevronLeft className="w-5 h-5 shrink-0" />
+                  <span className="truncate">{currentChapter === 1 ? '설정' : '이전'}</span>
+                </button>
+
+                {currentChapter < 6 ? (
+                  <button
+                    type="button"
+                    onClick={() => setCurrentChapter((c) => c + 1)}
+                    className="flex-[2.2] min-h-[50px] py-3 px-4 sm:px-5 rounded-xl bg-[#1B4965] hover:bg-[#15394F] text-white font-bold text-sm sm:text-base shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer touch-manipulation"
+                  >
+                    <span className="truncate">
+                      다음: 챕터 {currentChapter + 1} ({chapters[currentChapter].name})
+                    </span>
+                    <ChevronRight className="w-5 h-5 shrink-0" />
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setScreen('result')}
+                    className="flex-[2.2] min-h-[50px] py-3 px-4 sm:px-5 rounded-xl bg-gradient-to-r from-amber-500 via-amber-600 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-white font-serif-kr font-black text-sm sm:text-lg shadow-[0_6px_20px_rgba(217,119,6,0.4)] transition-all flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer touch-manipulation"
+                  >
+                    <Trophy className="w-5 h-5 text-yellow-100 shrink-0" />
+                    <span className="truncate">최종 건축 순위 발표</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* =========================================================
+              3. 최종 점수 및 등수 발표 화면 (FINAL SCOREBOARD)
+          ========================================================= */}
+          {screen === 'result' && (
+            <div className="space-y-4 sm:space-y-5 animate-stone-enter">
+              {/* 황금빛 아크로폴리스 승리 기념 헤더 */}
+              <div className="bg-gradient-to-br from-[#1B4965] via-[#235B7D] to-[#9E2A2B] rounded-2xl p-5 sm:p-6 text-white text-center shadow-xl border-2 border-amber-400 relative overflow-hidden">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(253,224,71,0.28),_transparent_65%)] pointer-events-none" />
+                <div className="relative z-10">
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 mx-auto rounded-2xl bg-gradient-to-br from-amber-300 to-amber-500 text-stone-900 flex items-center justify-center shadow-lg mb-2.5 sm:mb-3">
+                    <Crown className="w-7 h-7 sm:w-8 sm:h-8" />
+                  </div>
+                  <span className="font-cinzel text-[11px] sm:text-xs tracking-widest text-amber-200 font-bold">
+                    GRAND ARCHITECT OF AKROPOLIS
+                  </span>
+                  <h2 className="font-serif-kr text-xl sm:text-3xl font-black mt-1">
+                    최종 건축 점수 및 순위
+                  </h2>
+                  <p className="text-xs sm:text-sm text-amber-100/90 mt-1">
+                    {playerCount === 1
+                      ? '1인 솔로 모드 (vs 저명 건축가)'
+                      : `${playerCount}인 건축 대전`}{' '}
+                    · {isAthena ? '확장 1: 아테나 적용' : '기본판 규칙'}
+                  </p>
+                </div>
+              </div>
+
+              {/* 순위 리더보드 카드 */}
+              <div className="space-y-2.5 sm:space-y-3">
+                {rankedResults.map((player) => {
+                  const isFirst = player.rank === 1;
+                  return (
+                    <div
+                      key={player.id}
+                      className={`rounded-2xl p-3.5 sm:p-5 border-2 transition-all ${
+                        isFirst
+                          ? 'bg-gradient-to-r from-amber-50 via-[#FFFDF7] to-amber-50 border-amber-400 shadow-[0_8px_24px_rgba(217,119,6,0.18)]'
+                          : 'bg-[#FFFDF9] border-[#DFD3BE] shadow-sm'
+                      }`}
+                    >
+                      <div className="flex items-start sm:items-center justify-between gap-2.5 sm:gap-3">
+                        <div className="flex items-start sm:items-center gap-2.5 sm:gap-3.5 min-w-0 flex-1">
+                          {/* 등수 메달 뱃지 */}
+                          <div
+                            className={`w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex flex-col items-center justify-center font-black shadow-sm shrink-0 ${
+                              player.rank === 1
+                                ? 'bg-gradient-to-br from-amber-400 to-yellow-500 text-stone-900'
+                                : player.rank === 2
+                                ? 'bg-stone-300 text-stone-800'
+                                : player.rank === 3
+                                ? 'bg-amber-700/80 text-white'
+                                : 'bg-stone-100 text-stone-600'
+                            }`}
+                          >
+                            <span className="text-sm sm:text-base leading-none">{player.rank}위</span>
+                            {isFirst && <Crown className="w-3.5 h-3.5 mt-0.5" />}
+                          </div>
+
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                              <span className="font-serif-kr font-black text-base sm:text-xl text-stone-800 truncate">
+                                {player.name}
+                              </span>
+                              {isFirst && (
+                                <span className="text-[10px] sm:text-[11px] font-extrabold bg-amber-500 text-white px-2 py-0.5 rounded-full shrink-0">
+                                  최고의 건축가
+                                </span>
+                              )}
+                              {isAthena && player.athenaAchieved && (
+                                <span className="text-[10px] sm:text-[11px] font-extrabold bg-amber-100 text-amber-900 border border-amber-400 px-2 py-0.5 rounded-full shrink-0">
+                                  🏛️ 아테나 달성 (석재 ×5)
+                                </span>
+                              )}
+                            </div>
+
+                            {/* 챕터별 미니 점수 요약 칩 */}
+                            <div className="flex flex-wrap gap-1 sm:gap-1.5 mt-2">
+                              {chapters.map((ch) => (
+                                <span
+                                  key={ch.key}
+                                  className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-bold px-1.5 sm:px-2 py-0.5 rounded-md bg-stone-100 text-stone-700 border border-stone-200"
+                                >
+                                  <span
+                                    className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full shrink-0"
+                                    style={{ backgroundColor: ch.themeHex }}
+                                  />
+                                  <span>
+                                    {ch.id === 6 ? '석재' : ch.name} {player.breakdown[ch.key]}
+                                  </span>
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* 총합 점수 */}
+                        <div className="text-right shrink-0 pl-1">
+                          <span className="text-[11px] sm:text-xs font-bold text-stone-400 block">
+                            총점
+                          </span>
+                          <span
+                            className={`font-black text-2xl sm:text-3xl ${
+                              isFirst ? 'text-amber-700' : 'text-stone-800'
+                            }`}
+                          >
+                            {player.total}
+                          </span>
+                          <span className="text-xs font-bold text-stone-500 ml-0.5">점</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* 카카오톡 공유용 결과 복사 버튼 */}
+              <div className="bg-[#FFFDF9] rounded-2xl p-4 sm:p-5 border-2 border-[#E2D6C1] space-y-2.5 sm:space-y-3">
+                <button
+                  type="button"
+                  onClick={handleCopyResults}
+                  className="w-full min-h-[52px] py-3.5 px-4 sm:px-5 rounded-xl bg-[#FEE500] hover:bg-[#F5DC00] active:scale-[0.99] text-[#191919] font-extrabold text-sm sm:text-lg shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer touch-manipulation"
+                >
+                  {copiedToast ? (
+                    <>
+                      <Check className="w-5 h-5 stroke-[3] text-emerald-700 shrink-0" />
+                      <span>복사 완료! 카톡에 붙여넣기 하세요</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-5 h-5 shrink-0" />
+                      <span>최종 점수 결과 복사하기 (카톡 공유용)</span>
+                    </>
+                  )}
+                </button>
+
+                <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCurrentChapter(6);
+                      setScreen('scoring');
+                    }}
+                    className="min-h-[46px] py-3 px-3 sm:px-4 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs sm:text-sm transition-colors flex items-center justify-center gap-1.5 cursor-pointer touch-manipulation"
+                  >
+                    <ChevronLeft className="w-4 h-4 shrink-0" />
+                    <span>점수 수정하기</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setScreen('setup')}
+                    className="min-h-[46px] py-3 px-3 sm:px-4 rounded-xl bg-[#1B4965] hover:bg-[#15394F] text-white font-bold text-xs sm:text-sm transition-colors flex items-center justify-center gap-1.5 cursor-pointer touch-manipulation"
+                  >
+                    <RotateCcw className="w-4 h-4 shrink-0" />
+                    <span>새 게임 시작</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </main>
+
+        {/* 우측 도리아 기둥 (태블릿 이상 노출) */}
+        <div className="hidden md:flex flex-col justify-between py-2 ml-2 shrink-0">
+          <DoricColumn side="right" />
+        </div>
+      </div>
+
+      {/* =========================================================
+          최하단 고대 그리스 대리석 명판 각인 (제작자 : 천상민)
+      ========================================================= */}
+      <footer className="mt-auto pt-3 pb-7 px-4 text-center shrink-0">
+        <div className="inline-flex items-center gap-2.5 px-5 py-2 rounded-full bg-gradient-to-r from-[#F3ECE0] via-[#FFFDF9] to-[#F3ECE0] border border-[#D5C6AE] shadow-[0_3px_12px_rgba(120,90,40,0.08)]">
+          <span className="w-1.5 h-1.5 rounded-full bg-amber-600/80" />
+          <span className="font-serif-kr text-xs sm:text-sm font-bold tracking-wider text-stone-700">
+            제작자 : <strong className="text-[#1B4965] font-black">천상민</strong>
+          </span>
+          <span className="w-1.5 h-1.5 rounded-full bg-amber-600/80" />
+        </div>
+      </footer>
+
+      {/* =========================================================
+          게임 시작 준비단계 안내 알림창 (MODAL)
+      ========================================================= */}
+      {showSetupModal && (
+        <div className="fixed inset-0 z-50 bg-stone-950/65 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-fadeIn">
+          <div className="bg-[#FFFDF9] w-full max-w-lg max-h-[90vh] flex flex-col rounded-2xl border-2 border-amber-400 shadow-2xl overflow-hidden animate-stone-enter">
+            {/* 모달 헤더 */}
+            <div className="bg-gradient-to-r from-[#1B4965] to-[#27668C] px-4 sm:px-5 py-3.5 sm:py-4 text-white flex items-center justify-between gap-2 shrink-0">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-9 h-9 rounded-xl bg-amber-400 text-stone-900 flex items-center justify-center font-black shadow shrink-0">
+                  {playerCount}인
+                </div>
+                <div className="min-w-0">
+                  <h3 className="font-serif-kr font-bold text-sm sm:text-lg truncate">
+                    {SETUP_INSTRUCTIONS[playerCount].title}
+                  </h3>
+                  <p className="text-[11px] sm:text-xs text-amber-100 truncate">
+                    {SETUP_INSTRUCTIONS[playerCount].subtitle}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowSetupModal(false)}
+                className="p-2 rounded-lg text-white/80 hover:text-white hover:bg-white/10 cursor-pointer touch-manipulation shrink-0"
+                aria-label="닫기"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* 모달 본문: 인원수별 세팅 지침 (모바일 스크롤 대응) */}
+            <div className="p-4 sm:p-6 space-y-4 overflow-y-auto">
+              <div className="bg-[#FAF6EE] rounded-xl p-3.5 sm:p-4 border border-[#DFD3BE] space-y-2.5 sm:space-y-3">
+                <div className="text-xs font-extrabold text-[#9E2A2B] uppercase tracking-wider flex items-center gap-1.5">
+                  <ScrollText className="w-4 h-4" />
+                  <span>게임 준비단계 안내</span>
+                </div>
+                <ul className="space-y-2.5">
+                  {SETUP_INSTRUCTIONS[playerCount].steps.map((stepText, i) => (
+                    <li
+                      key={i}
+                      className="flex items-start gap-2.5 text-xs sm:text-sm text-stone-800 font-medium leading-relaxed"
+                    >
+                      <span className="w-5 h-5 rounded-full bg-[#1B4965] text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+                        {i + 1}
+                      </span>
+                      <span>{stepText}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* 플레이어별 초기 채석큐브 지급 요약 */}
+              <div>
+                <span className="text-xs font-bold text-stone-500 block mb-2">
+                  초기 채석큐브(석재) 지급 요약 (자동 반영됨)
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {SETUP_INSTRUCTIONS[playerCount].cubesSummary.map((item, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between bg-stone-100 px-3 py-2 rounded-lg border border-stone-200 text-xs"
+                    >
+                      <span className="font-bold text-stone-700 truncate">
+                        {playerCount === 1
+                          ? item.label
+                          : `${playerNames[idx]?.trim() || item.label}`}
+                      </span>
+                      <span className="font-extrabold text-[#1B4965] bg-white px-2 py-0.5 rounded border border-stone-200 shrink-0 ml-1">
+                        🪨 {item.cubes}개
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* 아테나 확장 알림 배너 */}
+              {isAthena && (
+                <div className="bg-amber-50 border border-amber-300 rounded-xl p-3 flex items-center gap-2.5 text-xs text-amber-950 font-semibold">
+                  <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
+                  <span>
+                    <strong>확장 1: 아테나</strong>가 활성화되어 챕터 6에서 플레이어별{' '}
+                    <strong className="underline">달성 체크 시 개당 +5점</strong>, 미체크 시 개당{' '}
+                    <strong>+1점</strong>으로 계산됩니다.
+                  </span>
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={handleConfirmStartGame}
+                className="w-full min-h-[50px] py-3.5 px-5 rounded-xl bg-gradient-to-r from-[#1B4965] to-[#27668C] hover:from-[#15394F] hover:to-[#1E506E] text-white font-bold text-sm sm:text-base shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer touch-manipulation"
+              >
+                <span>준비 완료! 챕터 1 점수 계산으로</span>
+                <ChevronRight className="w-5 h-5 shrink-0" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 클립보드 복사 완료 플로팅 토스트 */}
+      {copiedToast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-md bg-stone-900 text-white px-4 py-3 rounded-2xl sm:rounded-full shadow-2xl border border-amber-400/50 flex items-center justify-center gap-2.5 text-xs sm:text-sm font-bold animate-stone-enter">
+          <span className="w-6 h-6 rounded-full bg-[#FEE500] text-stone-900 flex items-center justify-center shrink-0">
+            <Check className="w-4 h-4 stroke-[3]" />
+          </span>
+          <span className="leading-snug">총합 점수 결과가 복사되었습니다! 카톡에 붙여넣으세요.</span>
+        </div>
+      )}
+    </div>
+  );
+}
